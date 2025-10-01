@@ -72,7 +72,7 @@
 ```yml
 services:
   decotv-core:
-    image: ghcr.io/your-username/decotv:latest
+    image: ghcr.io/decohererk/decotv:latest
     container_name: decotv-core
     restart: on-failure
     ports:
@@ -106,7 +106,7 @@ volumes:
 ```yml
 services:
   decotv-core:
-    image: ghcr.io/your-username/decotv:latest
+    image: ghcr.io/decohererk/decotv:latest
     container_name: decotv-core
     restart: on-failure
     ports:
@@ -142,7 +142,7 @@ networks:
 ```yml
 services:
   decotv-core:
-    image: ghcr.io/your-username/decotv:latest
+    image: ghcr.io/decohererk/decotv:latest
     container_name: decotv-core
     restart: on-failure
     ports:
