@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get('url');
-  const source = searchParams.get('moontv-source');
+  const source = searchParams.get('decotv-source');
   if (!url) {
     return NextResponse.json({ error: 'Missing url' }, { status: 400 });
   }

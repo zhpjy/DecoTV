@@ -11,10 +11,11 @@ export enum UpdateStatus {
   FETCH_FAILED = 'fetch_failed', // 获取失败
 }
 
-// 远程版本检查URL配置
-const VERSION_CHECK_URLS = [
-  'https://raw.githubusercontent.com/MoonTechLab/LunaTV/main/VERSION.txt',
-];
+// 远程版本检查URL配置（可通过 NEXT_PUBLIC_UPDATE_REPO 指定形如 "owner/repo"）
+const UPDATE_REPO = process.env.NEXT_PUBLIC_UPDATE_REPO;
+const VERSION_CHECK_URLS = UPDATE_REPO
+  ? [`https://raw.githubusercontent.com/${UPDATE_REPO}/main/VERSION.txt`]
+  : [];
 
 /**
  * 检查是否有新版本可用
@@ -22,20 +23,13 @@ const VERSION_CHECK_URLS = [
  */
 export async function checkForUpdates(): Promise<UpdateStatus> {
   try {
+    if (VERSION_CHECK_URLS.length === 0) {
+      return UpdateStatus.FETCH_FAILED;
+    }
+
     // 尝试从主要URL获取版本信息
     const primaryVersion = await fetchVersionFromUrl(VERSION_CHECK_URLS[0]);
-    if (primaryVersion) {
-      return compareVersions(primaryVersion);
-    }
-
-    // 如果主要URL失败，尝试备用URL
-    const backupVersion = await fetchVersionFromUrl(VERSION_CHECK_URLS[1]);
-    if (backupVersion) {
-      return compareVersions(backupVersion);
-    }
-
-    // 如果两个URL都失败，返回获取失败状态
-    return UpdateStatus.FETCH_FAILED;
+    return primaryVersion ? compareVersions(primaryVersion) : UpdateStatus.FETCH_FAILED;
   } catch (error) {
     console.error('版本检查失败:', error);
     return UpdateStatus.FETCH_FAILED;

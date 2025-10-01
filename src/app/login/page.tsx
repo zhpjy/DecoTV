@@ -35,7 +35,13 @@ function VersionDisplay() {
   return (
     <button
       onClick={() =>
-        window.open('https://github.com/MoonTechLab/LunaTV', '_blank')
+        window.open(
+          (process.env.NEXT_PUBLIC_REPO_URL as string) ||
+          (process.env.NEXT_PUBLIC_UPDATE_REPO
+            ? `https://github.com/${process.env.NEXT_PUBLIC_UPDATE_REPO}`
+            : '#'),
+          '_blank'
+        )
       }
       className='absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 transition-colors cursor-pointer'
     >

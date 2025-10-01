@@ -41,6 +41,8 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
   const [hasUpdate, setIsHasUpdate] = useState(false);
   const [latestVersion, setLatestVersion] = useState<string>('');
   const [showRemoteContent, setShowRemoteContent] = useState(false);
+  const UPDATE_REPO = process.env.NEXT_PUBLIC_UPDATE_REPO;
+  const REPO_URL = process.env.NEXT_PUBLIC_REPO_URL || (UPDATE_REPO ? `https://github.com/${UPDATE_REPO}` : '');
 
   // 确保组件已挂载
   useEffect(() => {
@@ -80,8 +82,9 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
   // 获取远程变更日志
   const fetchRemoteChangelog = async () => {
     try {
+      if (!UPDATE_REPO) return;
       const response = await fetch(
-        'https://raw.githubusercontent.com/MoonTechLab/LunaTV/main/CHANGELOG'
+        `https://raw.githubusercontent.com/${UPDATE_REPO}/main/CHANGELOG`
       );
       if (response.ok) {
         const content = await response.text();
@@ -363,7 +366,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                     </div>
                   </div>
                   <a
-                    href='https://github.com/MoonTechLab/LunaTV'
+                    href={REPO_URL || '#'}
                     target='_blank'
                     rel='noopener noreferrer'
                     className='inline-flex items-center justify-center gap-2 px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-xs sm:text-sm rounded-lg transition-colors shadow-sm w-full'
@@ -393,7 +396,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                     </div>
                   </div>
                   <a
-                    href='https://github.com/MoonTechLab/LunaTV'
+                    href={REPO_URL || '#'}
                     target='_blank'
                     rel='noopener noreferrer'
                     className='inline-flex items-center justify-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm rounded-lg transition-colors shadow-sm w-full'
