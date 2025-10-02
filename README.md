@@ -25,26 +25,14 @@
   <table>
     <tr>
       <td align="center">
-        <img src="public/screenshot1.png" alt="主页界面" width="400">
+        <img src="public/screenshot1.png" alt="明亮模式" width="400">
         <br>
-        <sub><b>🏠 主页界面</b></sub>
+        <sub><b>明亮模式</b></sub>
       </td>
       <td align="center">
-        <img src="public/screenshot2.png" alt="搜索页面" width="400">
+        <img src="public/screenshot2.png" alt="暗夜模式" width="400">
         <br>
-        <sub><b>🔍 搜索页面</b></sub>
-      </td>
-    </tr>
-    <tr>
-      <td align="center">
-        <img src="public/screenshot3.png" alt="播放界面" width="400">
-        <br>
-        <sub><b>▶️ 播放界面</b></sub>
-      </td>
-      <td align="center">
-        <img src="public/logo.png" alt="移动端适配" width="200">
-        <br>
-        <sub><b>📱 响应式设计</b></sub>
+        <sub><b>暗夜模式</b></sub>
       </td>
     </tr>
   </table>
@@ -73,7 +61,6 @@
   <summary>点击查看项目截图</summary>
   <img src="public/screenshot1.png" alt="项目截图" style="max-width:600px">
   <img src="public/screenshot2.png" alt="项目截图" style="max-width:600px">
-  <img src="public/screenshot3.png" alt="项目截图" style="max-width:600px">
 </details>
 
 ### 请不要在 B 站、小红书、微信公众号、抖音、今日头条或其他中国大陆社交平台发布视频或文章宣传本项目，不授权任何“科技周刊/月刊”类项目或站点收录本项目。
@@ -364,13 +351,6 @@ NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE 选项解释：
         <img src="public/wechat.jpg" alt="微信赞赏" width="200">
         <br>
         <sub><b>🎨 微信赞赏</b></sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/支付宝-00A1E9?style=for-the-badge&logo=alipay&logoColor=white" alt="支付宝" width="150">
-        <br>
-        <sub><b>💙 支付宝</b></sub>
-        <br>
-        <sub>（扫描二维码或搜索账号）</sub>
       </td>
     </tr>
   </table>
