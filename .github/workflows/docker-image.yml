@@ -34,10 +34,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Prepare platform name
-        run: |
-          echo "PLATFORM_NAME=${{ matrix.platform }}" | sed 's|/|-|g' >> $GITHUB_ENV
-
       - name: Checkout source code
         uses: actions/checkout@v4
 
@@ -84,7 +80,7 @@ jobs:
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ env.PLATFORM_NAME }}
+          name: digests-${{ matrix.platform == 'linux/amd64' && 'linux-amd64' || 'linux-arm64' }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
