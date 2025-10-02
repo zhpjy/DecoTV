@@ -12,6 +12,7 @@ import { GlobalErrorIndicator } from '../components/GlobalErrorIndicator';
 import { SiteProvider } from '../components/SiteProvider';
 import { ThemeProvider } from '../components/ThemeProvider';
 import TopNavbar from '../components/TopNavbar';
+import NavbarGate from '../components/NavbarGate';
 import ParticleBackground from '../components/ParticleBackground';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -121,7 +122,9 @@ export default async function RootLayout({
         >
           <SiteProvider siteName={siteName} announcement={announcement}>
             <ParticleBackground />
-            <TopNavbar />
+            <NavbarGate>
+              <TopNavbar />
+            </NavbarGate>
             {children}
             <GlobalErrorIndicator />
           </SiteProvider>
