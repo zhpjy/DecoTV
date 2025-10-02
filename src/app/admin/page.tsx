@@ -4690,6 +4690,43 @@ function AdminPageClient() {
               <LiveSourceConfig config={config} refreshConfig={fetchConfig} />
             </CollapsibleTab>
 
+            {/* TVbox 配置 */}
+            <CollapsibleTab
+              title='TVbox配置'
+              icon={
+                <Tv size={20} className='text-gray-600 dark:text-gray-400' />
+              }
+              isExpanded={false}
+              onToggle={() => { }}
+            >
+              <div className='space-y-4 p-4'>
+                <div className='text-sm text-gray-600 dark:text-gray-300'>
+                  TVBox 订阅地址已为你生成，可在 TVBox/猫影视 等应用中添加为订阅源：
+                </div>
+                <div className='flex items-center gap-2'>
+                  <input
+                    type='text'
+                    readOnly
+                    className='w-full px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-900/40 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700'
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/tvbox/config`}
+                  />
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin}/api/tvbox/config`;
+                      navigator.clipboard.writeText(url);
+                    }}
+                    className={buttonStyles.primary}
+                  >
+                    复制
+                  </button>
+                </div>
+                <ul className='list-disc pl-6 text-sm text-gray-500 dark:text-gray-400 space-y-1'>
+                  <li>常见入口：设置 → 订阅管理 → 添加订阅。</li>
+                  <li>本订阅包含“视频源”和“直播源”，与你在此后台启用的配置同步。</li>
+                </ul>
+              </div>
+            </CollapsibleTab>
+
             {/* 分类配置标签 */}
             <CollapsibleTab
               title='分类配置'

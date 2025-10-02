@@ -62,17 +62,8 @@ export default function ParticleBackground() {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
 
-      // Light beams
-      const beamCount = 3;
-      for (let i = 0; i < beamCount; i++) {
-        const x = ((Date.now() / 2000 + i / beamCount) % 1) * width;
-        const grd = ctx.createLinearGradient(x - 80, 0, x + 80, height);
-        grd.addColorStop(0, 'transparent');
-        grd.addColorStop(0.5, theme.beam);
-        grd.addColorStop(1, 'transparent');
-        ctx.fillStyle = grd;
-        ctx.fillRect(x - 100, 0, 200, height);
-      }
+      // 取消“竖向高光光波横扫”效果，避免干扰视觉
+      // 原先这里会绘制随时间移动的竖向光束
 
       // Particles
       for (const p of particles) {
