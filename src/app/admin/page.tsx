@@ -5286,6 +5286,9 @@ function AdminPageClient() {
     dataMigration: false,
   });
 
+  // TVBox 配置相关状态
+  const [tvboxFormat, setTvboxFormat] = useState<'json' | 'base64'>('json');
+
   // 获取管理员配置
   // showLoading 用于控制是否在请求期间显示整体加载骨架。
   const fetchConfig = useCallback(async (showLoading = false) => {
@@ -5326,6 +5329,41 @@ function AdminPageClient() {
       ...prev,
       [tabKey]: !prev[tabKey],
     }));
+  };
+
+  // TVBox 配置相关函数
+  const getTvboxConfigUrl = () => {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    return tvboxFormat === 'base64'
+      ? `${baseUrl}/api/tvbox/config?format=base64`
+      : `${baseUrl}/api/tvbox/config`;
+  };
+
+  const handleTvboxCopy = async () => {
+    try {
+      const url = getTvboxConfigUrl();
+      await navigator.clipboard.writeText(url);
+      showSuccess('复制成功！订阅地址已复制到剪贴板', showAlert);
+    } catch (err) {
+      showError('复制失败，请手动复制地址', showAlert);
+    }
+  };
+
+  const handleTvboxTest = async () => {
+    try {
+      const url = getTvboxConfigUrl();
+      const response = await fetch(url);
+      if (response.ok) {
+        showSuccess('配置测试成功！订阅地址可正常访问', showAlert);
+      } else {
+        throw new Error(`HTTP ${response.status}`);
+      }
+    } catch (err) {
+      showError(
+        `配置测试失败: ${err instanceof Error ? err.message : '网络错误'}`,
+        showAlert
+      );
+    }
   };
 
   // 新增: 重置配置处理函数
@@ -5483,28 +5521,67 @@ function AdminPageClient() {
             >
               <div className='space-y-4 p-4'>
                 <div className='text-sm text-gray-600 dark:text-gray-300'>
-                  TVBox 订阅地址已为你生成，可在 TVBox/猫影视
-                  等应用中添加为订阅源：
+                  TVBox 订阅地址已为你生成，支持标准 TVBox/猫影视格式。可在
+                  TVBox、猫影视、EasyBox 等应用中添加为订阅源：
                 </div>
+
+                {/* 格式选择 */}
+                <div className='space-y-2'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    输出格式：
+                  </label>
+                  <div className='flex space-x-4'>
+                    <label className='flex items-center'>
+                      <input
+                        type='radio'
+                        name='tvboxFormat'
+                        value='json'
+                        checked={tvboxFormat === 'json'}
+                        onChange={(e) =>
+                          setTvboxFormat(e.target.value as 'json' | 'base64')
+                        }
+                        className='mr-2 text-blue-600 focus:ring-blue-500'
+                      />
+                      <span className='text-sm text-gray-700 dark:text-gray-300'>
+                        JSON 格式
+                      </span>
+                    </label>
+                    <label className='flex items-center'>
+                      <input
+                        type='radio'
+                        name='tvboxFormat'
+                        value='base64'
+                        checked={tvboxFormat === 'base64'}
+                        onChange={(e) =>
+                          setTvboxFormat(e.target.value as 'json' | 'base64')
+                        }
+                        className='mr-2 text-blue-600 focus:ring-blue-500'
+                      />
+                      <span className='text-sm text-gray-700 dark:text-gray-300'>
+                        Base64 格式
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
                 <div className='flex items-center gap-2'>
                   <input
                     type='text'
                     readOnly
                     className='w-full px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-900/40 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700'
-                    value={`${
-                      typeof window !== 'undefined'
-                        ? window.location.origin
-                        : ''
-                    }/api/tvbox/config`}
+                    value={getTvboxConfigUrl()}
                   />
                   <button
-                    onClick={() => {
-                      const url = `${window.location.origin}/api/tvbox/config`;
-                      navigator.clipboard.writeText(url);
-                    }}
-                    className={buttonStyles.primary}
+                    onClick={handleTvboxCopy}
+                    className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium'
                   >
                     复制
+                  </button>
+                  <button
+                    onClick={handleTvboxTest}
+                    className='px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium'
+                  >
+                    测试
                   </button>
                 </div>
                 <ul className='list-disc pl-6 text-sm text-gray-500 dark:text-gray-400 space-y-1'>
