@@ -77,9 +77,20 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
     );
   };
 
+  const getMobileThemeClass = (href: string, label: string) => {
+    if (href === '/') return 'mb-home';
+    if (href.startsWith('/search') || label === '搜索') return 'mb-search';
+    if (href.includes('type=movie') || label === '电影') return 'mb-movie';
+    if (href.includes('type=tv') || label === '剧集') return 'mb-tv';
+    if (href.includes('type=anime') || label === '动漫') return 'mb-anime';
+    if (href.includes('type=show') || label === '综艺') return 'mb-show';
+    if (href.startsWith('/live') || label === '直播') return 'mb-live';
+    return '';
+  };
+
   return (
     <nav
-      className='md:hidden fixed left-0 right-0 z-[600] bg-white/90 backdrop-blur-xl border-t border-gray-200/50 overflow-hidden dark:bg-gray-900/80 dark:border-gray-700/50'
+      className='md:hidden fixed left-0 right-0 z-[600] bg-white/90 backdrop-blur-xl border-t border-gray-200/50 overflow-hidden dark:bg-gray-900/80 dark:border-gray-700/50 mbnav'
       style={{
         /* 紧贴视口底部，同时在内部留出安全区高度 */
         bottom: 0,
@@ -90,6 +101,7 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
       <ul className='flex items-center overflow-x-auto scrollbar-hide'>
         {navItems.map((item) => {
           const active = isActive(item.href);
+          const theme = getMobileThemeClass(item.href, item.label);
           return (
             <li
               key={item.href}
@@ -98,20 +110,13 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
             >
               <Link
                 href={item.href}
-                className='flex flex-col items-center justify-center w-full h-14 gap-1 text-xs'
+                className={`flex flex-col items-center justify-center w-full h-14 gap-1 text-xs mbnav-item ${theme} ${active ? 'mbnav-item-active neon-flicker' : ''}`}
               >
                 <item.icon
-                  className={`h-6 w-6 ${active
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-gray-500 dark:text-gray-400'
-                    }`}
+                  className={`h-6 w-6 ${active ? 'text-current' : 'text-gray-500 dark:text-gray-400'}`}
                 />
                 <span
-                  className={
-                    active
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-gray-600 dark:text-gray-300'
-                  }
+                  className={`${active ? 'text-current' : 'text-gray-600 dark:text-gray-300'}`}
                 >
                   {item.label}
                 </span>

@@ -4,10 +4,12 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function ParticleBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -36,16 +38,41 @@ export default function ParticleBackground() {
       });
     }
 
+    // 根据路由切换主题色域
+    const theme = (() => {
+      if (pathname.startsWith('/search')) return { a: 'rgba(99,102,241,0.09)', b: 'rgba(59,130,246,0.08)', beam: 'rgba(99,102,241,0.28)' };
+      if (pathname.startsWith('/douban') && typeof window !== 'undefined') {
+        const type = new URLSearchParams(window.location.search).get('type');
+        if (type === 'movie') return { a: 'rgba(244,114,182,0.10)', b: 'rgba(251,146,60,0.08)', beam: 'rgba(244,114,182,0.28)' };
+        if (type === 'tv') return { a: 'rgba(168,85,247,0.10)', b: 'rgba(59,130,246,0.08)', beam: 'rgba(168,85,247,0.28)' };
+        if (type === 'anime') return { a: 'rgba(20,184,166,0.10)', b: 'rgba(16,185,129,0.08)', beam: 'rgba(16,185,129,0.28)' };
+        if (type === 'show') return { a: 'rgba(250,204,21,0.10)', b: 'rgba(251,191,36,0.08)', beam: 'rgba(250,204,21,0.28)' };
+      }
+      if (pathname.startsWith('/live')) return { a: 'rgba(236,72,153,0.10)', b: 'rgba(244,63,94,0.08)', beam: 'rgba(236,72,153,0.28)' };
+      return { a: 'rgba(99,102,241,0.06)', b: 'rgba(16,185,129,0.06)', beam: 'rgba(236,72,153,0.22)' };
+    })();
+
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
 
       // Neon gradient backdrop
       const gradient = ctx.createLinearGradient(0, 0, width, height);
-      gradient.addColorStop(0, 'rgba(99,102,241,0.06)');
-      gradient.addColorStop(0.5, 'rgba(16,185,129,0.06)');
-      gradient.addColorStop(1, 'rgba(236,72,153,0.06)');
+      gradient.addColorStop(0, theme.a);
+      gradient.addColorStop(1, theme.b);
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
+
+      // Light beams
+      const beamCount = 3;
+      for (let i = 0; i < beamCount; i++) {
+        const x = ((Date.now() / 2000 + i / beamCount) % 1) * width;
+        const grd = ctx.createLinearGradient(x - 80, 0, x + 80, height);
+        grd.addColorStop(0, 'transparent');
+        grd.addColorStop(0.5, theme.beam);
+        grd.addColorStop(1, 'transparent');
+        ctx.fillStyle = grd;
+        ctx.fillRect(x - 100, 0, 200, height);
+      }
 
       // Particles
       for (const p of particles) {
@@ -93,7 +120,7 @@ export default function ParticleBackground() {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', onResize);
     };
-  }, []);
+  }, [pathname]);
 
   return (
     <canvas
