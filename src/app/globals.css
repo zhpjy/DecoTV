@@ -31,11 +31,11 @@ body {
 
 /* Neon text effect for brand */
 .neon-text {
-  background: linear-gradient(90deg, #60a5fa, #34d399, #f472b6);
+  background: linear-gradient(90deg, #a78bfa, #c084fc, #f0abfc);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 0 20px rgba(99, 102, 241, 0.5), 0 0 40px rgba(16, 185, 129, 0.3), 0 0 60px rgba(236, 72, 153, 0.2);
+  text-shadow: 0 0 18px rgba(167, 139, 250, 0.6), 0 0 36px rgba(192, 132, 252, 0.35), 0 0 54px rgba(240, 171, 252, 0.25);
 }
 
 /* Glass chip */
@@ -144,17 +144,9 @@ body {
 .mb-live { color: #ec4899; }
 
 /* 按钮/卡片悬停高光轨迹 */
-.hover-beam {
-  position: relative; overflow: hidden; isolation: isolate;
-}
-.hover-beam::before {
-  content: '';
-  position: absolute; top: -150%; left: -50%; width: 60%; height: 300%;
-  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.18) 45%, transparent 60%);
-  transform: rotate(20deg);
-  transition: transform .7s ease;
-}
-.hover-beam:hover::before { transform: rotate(20deg) translateX(200%); }
+/* 移除 sweeping 高光轨迹效果（保留占位，避免类名报错） */
+.hover-beam { position: relative; }
+.hover-beam::before { content: none; }
 
 /* 过场加强：淡入上滑组合 */
 @keyframes superFadeSlide {
@@ -185,7 +177,8 @@ html:not(.dark) body {
               radial-gradient(800px 800px at 90% 20%, rgba(16,185,129,0.08), transparent 60%),
               radial-gradient(800px 800px at 50% 90%, rgba(236,72,153,0.08), transparent 60%);
   pointer-events: none;
-  animation: bgFloat 16s ease-in-out infinite alternate;
+  /* 降低动态背景的动画强度，避免强烈高光划过体验 */
+  animation: bgFloat 24s ease-in-out infinite alternate;
 }
 
 @keyframes bgFloat {
