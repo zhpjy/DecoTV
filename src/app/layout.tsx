@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { Metadata, Viewport } from 'next';
+import React from 'react';
 import { Inter } from 'next/font/google';
 
 import './globals.css';
@@ -10,6 +11,8 @@ import { getConfig } from '@/lib/config';
 import { GlobalErrorIndicator } from '../components/GlobalErrorIndicator';
 import { SiteProvider } from '../components/SiteProvider';
 import { ThemeProvider } from '../components/ThemeProvider';
+import TopNavbar from '../components/TopNavbar';
+import ParticleBackground from '../components/ParticleBackground';
 
 const inter = Inter({ subsets: ['latin'] });
 export const dynamic = 'force-dynamic';
@@ -117,6 +120,8 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <SiteProvider siteName={siteName} announcement={announcement}>
+            <ParticleBackground />
+            <TopNavbar />
             {children}
             <GlobalErrorIndicator />
           </SiteProvider>
