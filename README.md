@@ -1,7 +1,8 @@
+<!-- markdownlint-disable MD033 -->
+
 # DecoTV
 
-<div align="center">
-  <img src="public/logo.png" alt="DecoTV Logo" width="120">
+<div align="center"src="public/logo.png" alt="DecoTV Logo" width="120">
 </div>
 
 > 🎬 **DecoTV** 是一个开箱即用的、跨平台的影视聚合播放器。它基于 **Next.js 14** + **Tailwind&nbsp;CSS** + **TypeScript** 构建，支持多资源搜索、在线播放、收藏同步、播放记录、云端存储，让你可以随时随地畅享海量免费影视内容。
@@ -17,6 +18,44 @@
 </div>
 
 ---
+
+## 🎬 项目展示
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="public/screenshot1.png" alt="主页界面" width="400">
+        <br>
+        <sub><b>🏠 主页界面</b></sub>
+      </td>
+      <td align="center">
+        <img src="public/screenshot2.png" alt="搜索页面" width="400">
+        <br>
+        <sub><b>🔍 搜索页面</b></sub>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="public/screenshot3.png" alt="播放界面" width="400">
+        <br>
+        <sub><b>▶️ 播放界面</b></sub>
+      </td>
+      <td align="center">
+        <img src="public/logo.png" alt="移动端适配" width="200">
+        <br>
+        <sub><b>📱 响应式设计</b></sub>
+      </td>
+    </tr>
+  </table>
+</div>
+
+---
+
+### ⚠️ 重要提醒
+
+> **注意**：部署后项目为空壳项目，无内置播放源和直播源，需要自行收集配置。  
+> **免责声明**：请不要在 B 站、小红书、微信公众号、抖音、今日头条或其他中国大陆社交平台发布视频或文章宣传本项目，不授权任何"科技周刊/月刊"类项目或站点收录本项目。
 
 ## ✨ 功能特性
 
@@ -37,22 +76,26 @@
   <img src="public/screenshot3.png" alt="项目截图" style="max-width:600px">
 </details>
 
-### 请不要在 B站、小红书、微信公众号、抖音、今日头条或其他中国大陆社交平台发布视频或文章宣传本项目，不授权任何“科技周刊/月刊”类项目或站点收录本项目。
+### 请不要在 B 站、小红书、微信公众号、抖音、今日头条或其他中国大陆社交平台发布视频或文章宣传本项目，不授权任何“科技周刊/月刊”类项目或站点收录本项目。
 
 ## 🗺 目录
 
-- [技术栈](#技术栈)
-- [部署](#部署)
-- [配置文件](#配置文件)
-- [自动更新](#自动更新)
-- [环境变量](#环境变量)
-- [AndroidTV 使用](#AndroidTV-使用)
-- [Roadmap](#roadmap)
-- [安全与隐私提醒](#安全与隐私提醒)
-- [License](#license)
-- [致谢](#致谢)
+- [🎬 项目展示](#-项目展示)
+- [✨ 功能特性](#-功能特性)
+- [🛠 技术栈](#-技术栈)
+- [🚀 部署](#-部署)
+- [⚙️ 配置文件](#️-配置文件)
+- [🔄 自动更新](#-自动更新)
+- [🌍 环境变量](#-环境变量)
+- [� Roadmap](#-roadmap)
+- [�📺 AndroidTV 使用](#-androidtv-使用)
+- [🔒 安全与隐私提醒](#-安全与隐私提醒)
+- [📄 License](#-license)
+- [🙏 致谢](#-致谢)
+- [📈 Star History](#-star-history)
+- [💝 赞赏支持](#-赞赏支持)
 
-## 技术栈
+## 🛠 技术栈
 
 | 分类      | 主要依赖                                                                                              |
 | --------- | ----------------------------------------------------------------------------------------------------- |
@@ -61,9 +104,9 @@
 | 语言      | TypeScript 4                                                                                          |
 | 播放器    | [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) · [HLS.js](https://github.com/video-dev/hls.js/) |
 | 代码质量  | ESLint · Prettier · Jest                                                                              |
-| 部署      | Docker                                                                    |
+| 部署      | Docker                                                                                                |
 
-## 部署
+## 🚀 部署
 
 本项目**仅支持 Docker 或其他基于 Docker 的平台** 部署。
 
@@ -139,6 +182,7 @@ networks:
 1. 在 [upstash](https://upstash.com/) 注册账号并新建一个 Redis 实例，名称任意。
 2. 复制新数据库的 **HTTPS ENDPOINT 和 TOKEN**
 3. 使用如下 docker compose
+
 ```yml
 services:
   decotv-core:
@@ -155,7 +199,7 @@ services:
       - UPSTASH_TOKEN=上面的 TOKEN
 ```
 
-## 配置文件
+## ⚙️ 配置文件
 
 完成部署后为空壳应用，无播放源，需要站长在管理后台的配置文件设置中填写配置文件（后续会支持订阅）
 
@@ -202,33 +246,33 @@ custom_category 支持的自定义分类已知如下：
 
 DecoTV 支持标准的苹果 CMS V10 API 格式。
 
-## 自动更新
+## 🔄 自动更新
 
 可借助 [watchtower](https://github.com/containrrr/watchtower) 自动更新镜像容器
 
 dockge/komodo 等 docker compose UI 也有自动更新功能
 
-## 环境变量
+## 🌍 环境变量
 
-| 变量                                | 说明                                         | 可选值                           | 默认值                                                                                                                     |
-| ----------------------------------- | -------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| USERNAME                            | 站长账号           | 任意字符串                       | 无默认，必填字段                                                                                                                     |
-| PASSWORD                            | 站长密码           | 任意字符串                       | 无默认，必填字段                                                                                                                     |
-| SITE_BASE                           | 站点 url              |       形如 https://example.com                  | 空                                                                                                                     |
-| NEXT_PUBLIC_SITE_NAME               | 站点名称                                     | 任意字符串                       | DecoTV                                                                                                                     |
-| ANNOUNCEMENT                        | 站点公告                                     | 任意字符串                       | 本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。 |
-| NEXT_PUBLIC_STORAGE_TYPE            | 播放记录/收藏的存储方式                      | redis、kvrocks、upstash | 无默认，必填字段                                                                                                               |
-| KVROCKS_URL                           | kvrocks 连接 url                               | 连接 url                         | 空                                                                                                                         |
-| REDIS_URL                           | redis 连接 url                               | 连接 url                         | 空                                                                                                                         |
-| UPSTASH_URL                         | upstash redis 连接 url                       | 连接 url                         | 空                                                                                                                         |
-| UPSTASH_TOKEN                       | upstash redis 连接 token                     | 连接 token                       | 空                                                                                                                         |
-| NEXT_PUBLIC_SEARCH_MAX_PAGE         | 搜索接口可拉取的最大页数                     | 1-50                             | 5                                                                                                                          |
-| NEXT_PUBLIC_DOUBAN_PROXY_TYPE       | 豆瓣数据源请求方式                           | 见下方                           | direct                                                                                                                     |
-| NEXT_PUBLIC_DOUBAN_PROXY            | 自定义豆瓣数据代理 URL                       | url prefix                       | (空)                                                                                                                       |
-| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE | 豆瓣图片代理类型                             | 见下方                           | direct                                                                                                                     |
-| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY      | 自定义豆瓣图片代理 URL                       | url prefix                       | (空)                                                                                                                       |
-| NEXT_PUBLIC_DISABLE_YELLOW_FILTER   | 关闭色情内容过滤                             | true/false                       | false                                                                                                                      |
-| NEXT_PUBLIC_FLUID_SEARCH | 是否开启搜索接口流式输出 | true/ false | true |
+| 变量                                | 说明                     | 可选值                   | 默认值                                                                                                                     |
+| ----------------------------------- | ------------------------ | ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| USERNAME                            | 站长账号                 | 任意字符串               | 无默认，必填字段                                                                                                           |
+| PASSWORD                            | 站长密码                 | 任意字符串               | 无默认，必填字段                                                                                                           |
+| SITE_BASE                           | 站点 url                 | 形如 https://example.com | 空                                                                                                                         |
+| NEXT_PUBLIC_SITE_NAME               | 站点名称                 | 任意字符串               | DecoTV                                                                                                                     |
+| ANNOUNCEMENT                        | 站点公告                 | 任意字符串               | 本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。 |
+| NEXT_PUBLIC_STORAGE_TYPE            | 播放记录/收藏的存储方式  | redis、kvrocks、upstash  | 无默认，必填字段                                                                                                           |
+| KVROCKS_URL                         | kvrocks 连接 url         | 连接 url                 | 空                                                                                                                         |
+| REDIS_URL                           | redis 连接 url           | 连接 url                 | 空                                                                                                                         |
+| UPSTASH_URL                         | upstash redis 连接 url   | 连接 url                 | 空                                                                                                                         |
+| UPSTASH_TOKEN                       | upstash redis 连接 token | 连接 token               | 空                                                                                                                         |
+| NEXT_PUBLIC_SEARCH_MAX_PAGE         | 搜索接口可拉取的最大页数 | 1-50                     | 5                                                                                                                          |
+| NEXT_PUBLIC_DOUBAN_PROXY_TYPE       | 豆瓣数据源请求方式       | 见下方                   | direct                                                                                                                     |
+| NEXT_PUBLIC_DOUBAN_PROXY            | 自定义豆瓣数据代理 URL   | url prefix               | (空)                                                                                                                       |
+| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE | 豆瓣图片代理类型         | 见下方                   | direct                                                                                                                     |
+| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY      | 自定义豆瓣图片代理 URL   | url prefix               | (空)                                                                                                                       |
+| NEXT_PUBLIC_DISABLE_YELLOW_FILTER   | 关闭色情内容过滤         | true/false               | false                                                                                                                      |
+| NEXT_PUBLIC_FLUID_SEARCH            | 是否开启搜索接口流式输出 | true/ false              | true                                                                                                                       |
 
 NEXT_PUBLIC_DOUBAN_PROXY_TYPE 选项解释：
 
@@ -247,13 +291,23 @@ NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE 选项解释：
 - cmliussss-cdn-ali：由浏览器请求豆瓣 CDN，该 CDN 由 [CMLiussss](https://github.com/cmliu) 搭建，并由阿里云 cdn 提供加速
 - custom: 用户自定义 proxy，由 NEXT_PUBLIC_DOUBAN_IMAGE_PROXY 定义
 
-## AndroidTV 使用
+## � Roadmap
+
+- [ ] 多语言国际化支持
+- [ ] 更多数据库存储选择
+- [ ] 手机端 APP 开发
+- [ ] 智能推荐算法
+- [ ] 用户评分系统
+- [ ] 弹幕功能
+- [ ] 离线下载功能
+
+## �📺 AndroidTV 使用
 
 目前该项目可以配合 [OrionTV](https://github.com/zimplexing/OrionTV) 在 Android TV 上使用，可以直接作为 OrionTV 后端
 
 已实现播放记录和网页端同步
 
-## 安全与隐私提醒
+## 🔒 安全与隐私提醒
 
 ### 请设置密码保护并关闭公网注册
 
@@ -273,11 +327,11 @@ NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE 选项解释：
 - 项目开发者不对用户的使用行为承担任何法律责任
 - 本项目不在中国大陆地区提供服务。如有该项目在向中国大陆地区提供服务，属个人行为。在该地区使用所产生的法律风险及责任，属于用户个人行为，与本项目无关，须自行承担全部责任。特此声明
 
-## License
+## 📄 License
 
 [MIT](LICENSE) © 2025 DecoTV & Contributors
 
-## 致谢
+## 🙏 致谢
 
 - [ts-nextjs-tailwind-starter](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter) — 项目最初基于该脚手架。
 - [LibreTV](https://github.com/LibreSpark/LibreTV) — 由此启发，站在巨人的肩膀上。
@@ -287,4 +341,48 @@ NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE 选项解释：
 - [CMLiussss](https://github.com/cmliu) — 提供豆瓣 CDN 服务
 - 感谢所有提供免费影视接口的站点。
 
- 
+## 📈 Star History
+
+<div align="center">
+  <a href="https://star-history.com/#Decohererk/DecoTV&Date">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Decohererk/DecoTV&type=Date&theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Decohererk/DecoTV&type=Date" />
+      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Decohererk/DecoTV&type=Date" />
+    </picture>
+  </a>
+</div>
+
+## 💝 赞赏支持
+
+如果这个项目对你有所帮助，欢迎 Star ⭐ 本项目或请作者喝杯咖啡 ☕
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="public/wechat.jpg" alt="微信赞赏" width="200">
+        <br>
+        <sub><b>🎨 微信赞赏</b></sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/支付宝-00A1E9?style=for-the-badge&logo=alipay&logoColor=white" alt="支付宝" width="150">
+        <br>
+        <sub><b>💙 支付宝</b></sub>
+        <br>
+        <sub>（扫描二维码或搜索账号）</sub>
+      </td>
+    </tr>
+  </table>
+</div>
+
+---
+
+<div align="center">
+  <p>
+    <strong>🌟 如果觉得项目有用，请点个 Star 支持一下！🌟</strong>
+  </p>
+  <p>
+    <sub>Made with ❤️ by <a href="https://github.com/Decohererk">Decohererk</a> and <a href="https://github.com/Decohererk/DecoTV/graphs/contributors">Contributors</a></sub>
+  </p>
+</div>
