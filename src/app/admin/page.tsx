@@ -5334,9 +5334,8 @@ function AdminPageClient() {
   // TVBox 配置相关函数
   const getTvboxConfigUrl = () => {
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    return tvboxFormat === 'base64'
-      ? `${baseUrl}/api/tvbox/config?format=base64`
-      : `${baseUrl}/api/tvbox/config`;
+    // 始终附带 format 参数，确保 JSON 时为 ?format=json
+    return `${baseUrl}/api/tvbox/config?format=${tvboxFormat}`;
   };
 
   const handleTvboxCopy = async () => {

@@ -15,8 +15,17 @@ export const runtime = 'nodejs';
  * 1: MacCMS JSON格式
  * 3: 自定义json格式
  */
+/**
+ * 检测 API 类型
+ * 0: MacCMS XML格式
+ * 1: MacCMS JSON格式
+ * 3: CSP 源（csp_*）
+ */
 function detectApiType(api: string): number {
   const url = api.toLowerCase();
+
+  // CSP 源（优先判断）
+  if (url.startsWith('csp_')) return 3;
 
   // XML采集接口
   if (url.includes('xml') || (url.includes('maccms') && url.includes('xml'))) {
@@ -39,24 +48,73 @@ function detectApiType(api: string): number {
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
+    const { searchParams, href } = new URL(req.url);
     const format = searchParams.get('format') || 'json';
+    console.log('[TVBox] request:', href, 'format:', format);
 
     const cfg = await getConfig();
 
     // 构建站点配置 - 严格按照TVBox标准格式
+    // 构建站点配置 - 兼容 MacCMS/CSP，支持从 detail 中读取扩展/自定义字段
+    let globalSpiderJar = '';
     const sites = (cfg.SourceConfig || [])
       .filter((s) => !s.disabled)
-      .map((s) => ({
-        key: s.key,
-        name: s.name,
-        type: detectApiType(s.api),
-        api: s.api,
-        searchable: 1,
-        quickSearch: 1,
-        filterable: 1,
-        ext: s.detail || '',
-      }));
+      .map((s) => {
+        const site: any = {
+          key: s.key,
+          name: s.name,
+          type: detectApiType(s.api),
+          api: s.api,
+          searchable: 1,
+          quickSearch: 1,
+          filterable: 1,
+        };
+
+        // 解析 detail：允许 JSON 字符串承载扩展字段，如 { ext, jar, type, api, searchable, quickSearch, filterable, playUrl }
+        const detail = (s.detail || '').trim();
+        if (detail) {
+          try {
+            const obj = JSON.parse(detail);
+            if (obj) {
+              if (obj.type !== undefined) site.type = obj.type;
+              if (obj.api) site.api = obj.api;
+              if (obj.ext !== undefined) {
+                // 强制 ext 为字符串，避免部分 TVBox 分支无法解析对象
+                site.ext =
+                  typeof obj.ext === 'string'
+                    ? obj.ext
+                    : JSON.stringify(obj.ext);
+              }
+              if (obj.searchable !== undefined)
+                site.searchable = obj.searchable;
+              if (obj.quickSearch !== undefined)
+                site.quickSearch = obj.quickSearch;
+              if (obj.filterable !== undefined)
+                site.filterable = obj.filterable;
+              if (obj.playUrl !== undefined) site.playUrl = obj.playUrl;
+              if (obj.jar) {
+                site.jar = obj.jar; // 有些分支支持站点级 jar
+                if (!globalSpiderJar) globalSpiderJar = obj.jar; // 兜底设为全局 spider
+              }
+            }
+          } catch {
+            // 非 JSON，作为 ext 字符串
+            site.ext = detail;
+          }
+        } else {
+          site.ext = '';
+        }
+
+        // 如果 api 以 csp_ 开头，则强制为 CSP 类型
+        if (
+          typeof site.api === 'string' &&
+          site.api.toLowerCase().startsWith('csp_')
+        ) {
+          site.type = 3;
+        }
+
+        return site;
+      });
 
     // 构建直播配置
     const lives = (cfg.LiveConfig || [])
@@ -75,7 +133,7 @@ export async function GET(req: NextRequest) {
 
     // 标准 TVBox 配置格式 - 最小化且兼容的格式
     const tvboxConfig = {
-      spider: '',
+      spider: globalSpiderJar || '',
       wallpaper: '',
       sites: sites,
       lives: lives,
@@ -157,7 +215,8 @@ export async function GET(req: NextRequest) {
         },
         2
       );
-      contentType = 'application/json; charset=utf-8';
+      // 某些 TVBox 分支对 application/json 处理有兼容性问题，改为 text/plain
+      contentType = 'text/plain; charset=utf-8';
     }
 
     return new NextResponse(responseContent, {
