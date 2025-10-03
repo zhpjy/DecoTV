@@ -39,7 +39,7 @@ jobs:
         run: |
           PLATFORM_ID=$(echo "${{ matrix.platform }}" | sed 's|/|-|g')
           echo "id=${PLATFORM_ID}" >> $GITHUB_OUTPUT
-          
+
       - name: Checkout source code
         uses: actions/checkout@v5
 
