@@ -50,6 +50,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams, href } = new URL(req.url);
     const format = searchParams.get('format') || 'json';
+    const mode = (searchParams.get('mode') || '').toLowerCase(); // 可选: safe|min
     console.log('[TVBox] request:', href, 'format:', format);
 
     const cfg = await getConfig();
@@ -131,61 +132,67 @@ export async function GET(req: NextRequest) {
         group: '直播',
       }));
 
-    // 标准 TVBox 配置格式 - 最小化且兼容的格式
-    const tvboxConfig = {
-      spider: globalSpiderJar || '',
-      wallpaper: '',
-      sites: sites,
-      lives: lives,
-      parses: [
-        {
-          name: '默认解析',
-          type: 0,
-          url: 'https://jx.xmflv.com/?url=',
-        },
-        {
-          name: 'Json并发',
-          type: 2,
-          url: 'Parallel',
-        },
-      ],
-      flags: [
-        'youku',
-        'qq',
-        'iqiyi',
-        'qiyi',
-        'letv',
-        'sohu',
-        'tudou',
-        'pptv',
-        'mgtv',
-        'wasu',
-        'bilibili',
-        'renrenmi',
-      ],
-      ijk: [
-        {
-          group: '软解码',
-          options: [
-            { category: 4, name: 'opensles', value: '0' },
-            { category: 4, name: 'overlay-format', value: '842225234' },
-            { category: 4, name: 'framedrop', value: '1' },
-            { category: 4, name: 'start-on-prepared', value: '1' },
-            { category: 1, name: 'http-detect-range-support', value: '0' },
-            { category: 1, name: 'fflags', value: 'fastseek' },
-            { category: 4, name: 'reconnect', value: '1' },
-            { category: 4, name: 'mediacodec', value: '0' },
-            { category: 4, name: 'mediacodec-auto-rotate', value: '0' },
-            {
-              category: 4,
-              name: 'mediacodec-handle-resolution-change',
-              value: '0',
-            },
-          ],
-        },
-      ],
-      ads: ['mimg.0c1q0l.cn', 'www.googletagmanager.com', 'mc.usihnbcq.cn'],
-    };
+    // 构建配置对象（支持安全模式）
+    let tvboxConfig: any;
+    if (mode === 'safe' || mode === 'min') {
+      // 仅输出最必要字段，避免解析器因字段不兼容而失败
+      tvboxConfig = {
+        spider: globalSpiderJar || '',
+        sites,
+        lives,
+        parses: [
+          { name: '默认解析', type: 0, url: 'https://jx.xmflv.com/?url=' },
+        ],
+      };
+    } else {
+      // 标准但精简的完整配置
+      tvboxConfig = {
+        spider: globalSpiderJar || '',
+        wallpaper: '',
+        sites,
+        lives,
+        parses: [
+          { name: '默认解析', type: 0, url: 'https://jx.xmflv.com/?url=' },
+          { name: 'Json并发', type: 2, url: 'Parallel' },
+        ],
+        flags: [
+          'youku',
+          'qq',
+          'iqiyi',
+          'qiyi',
+          'letv',
+          'sohu',
+          'tudou',
+          'pptv',
+          'mgtv',
+          'wasu',
+          'bilibili',
+          'renrenmi',
+        ],
+        ijk: [
+          {
+            group: '软解码',
+            options: [
+              { category: 4, name: 'opensles', value: '0' },
+              { category: 4, name: 'overlay-format', value: '842225234' },
+              { category: 4, name: 'framedrop', value: '1' },
+              { category: 4, name: 'start-on-prepared', value: '1' },
+              { category: 1, name: 'http-detect-range-support', value: '0' },
+              { category: 1, name: 'fflags', value: 'fastseek' },
+              { category: 4, name: 'reconnect', value: '1' },
+              { category: 4, name: 'mediacodec', value: '0' },
+              { category: 4, name: 'mediacodec-auto-rotate', value: '0' },
+              {
+                category: 4,
+                name: 'mediacodec-handle-resolution-change',
+                value: '0',
+              },
+            ],
+          },
+        ],
+        ads: ['mimg.0c1q0l.cn', 'www.googletagmanager.com', 'mc.usihnbcq.cn'],
+      };
+    }
 
     // 验证配置格式
     console.log('TVBox配置验证:', {

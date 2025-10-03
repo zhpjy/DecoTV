@@ -5333,7 +5333,18 @@ function AdminPageClient() {
 
   // TVBox 配置相关函数
   const getTvboxConfigUrl = () => {
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    // 优先使用显式配置的公网基址，避免出现 0.0.0.0、localhost 等不可用地址
+    const envBase = (process.env.NEXT_PUBLIC_SITE_BASE || '')
+      .trim()
+      .replace(/\/$/, '');
+    let baseUrl = envBase;
+    if (!baseUrl) {
+      if (typeof window !== 'undefined') {
+        baseUrl = window.location.origin;
+      } else {
+        baseUrl = '';
+      }
+    }
     // 始终附带 format 参数，确保 JSON 时为 ?format=json
     return `${baseUrl}/api/tvbox/config?format=${tvboxFormat}`;
   };
