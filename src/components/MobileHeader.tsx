@@ -51,9 +51,12 @@ const MobileHeader = ({ showBackButton = false }: MobileHeaderProps) => {
       <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
         <Link
           href='/'
-          className='text-2xl font-bold text-green-600 tracking-tight hover:opacity-80 transition-opacity'
+          className='text-2xl font-bold tracking-tight hover:opacity-90 transition-all duration-300 hover:scale-105'
         >
-          {siteName}
+          <span className='bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-pulse hover:animate-none relative'>
+            <span className='absolute inset-0 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent blur-sm opacity-70'></span>
+            <span className='relative'>{siteName}</span>
+          </span>
         </Link>
       </div>
     </header>

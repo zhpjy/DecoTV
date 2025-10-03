@@ -35,14 +35,20 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 0 18px rgba(167, 139, 250, 0.6), 0 0 36px rgba(192, 132, 252, 0.35), 0 0 54px rgba(240, 171, 252, 0.25);
+  text-shadow: 0 0 18px rgba(167, 139, 250, 0.6),
+    0 0 36px rgba(192, 132, 252, 0.35), 0 0 54px rgba(240, 171, 252, 0.25);
 }
 
 /* Glass chip */
 .glass-chip {
-  background: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15));
-  border: 1px solid rgba(255,255,255,0.3);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 10px 30px -15px rgba(99,102,241,0.5);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.3),
+    rgba(255, 255, 255, 0.15)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 10px 30px -15px rgba(99, 102, 241, 0.5);
   backdrop-filter: blur(16px);
 }
 
@@ -55,7 +61,12 @@ body {
   position: absolute;
   inset: -1px;
   border-radius: 9999px;
-  background: radial-gradient(60% 60% at 50% 50%, rgba(16,185,129,0.25), rgba(99,102,241,0.15) 60%, transparent 100%);
+  background: radial-gradient(
+    60% 60% at 50% 50%,
+    rgba(16, 185, 129, 0.25),
+    rgba(99, 102, 241, 0.15) 60%,
+    transparent 100%
+  );
   z-index: -1;
   filter: blur(8px);
   opacity: 0;
@@ -67,10 +78,28 @@ body {
 
 /* 夸张霓虹闪烁与辉光 */
 @keyframes neonFlicker {
-  0%, 13%, 16%, 25%, 30%, 70%, 100% { filter: drop-shadow(0 0 0px rgba(0,0,0,0)); opacity: 1; }
-  14% { filter: drop-shadow(0 0 8px rgba(99,102,241,0.8)) drop-shadow(0 0 16px rgba(16,185,129,0.6)); }
-  26% { filter: drop-shadow(0 0 10px rgba(236,72,153,0.8)) drop-shadow(0 0 20px rgba(59,130,246,0.6)); }
-  71% { filter: drop-shadow(0 0 12px rgba(16,185,129,0.8)) drop-shadow(0 0 24px rgba(236,72,153,0.6)); }
+  0%,
+  13%,
+  16%,
+  25%,
+  30%,
+  70%,
+  100% {
+    filter: drop-shadow(0 0 0px rgba(0, 0, 0, 0));
+    opacity: 1;
+  }
+  14% {
+    filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.8))
+      drop-shadow(0 0 16px rgba(16, 185, 129, 0.6));
+  }
+  26% {
+    filter: drop-shadow(0 0 10px rgba(236, 72, 153, 0.8))
+      drop-shadow(0 0 20px rgba(59, 130, 246, 0.6));
+  }
+  71% {
+    filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.8))
+      drop-shadow(0 0 24px rgba(236, 72, 153, 0.6));
+  }
 }
 
 .neon-flicker {
@@ -78,41 +107,147 @@ body {
 }
 
 /* 分类专属渐变与光晕 */
-.chip-theme { position: relative; isolation: isolate; }
+.chip-theme {
+  position: relative;
+  isolation: isolate;
+}
 .chip-theme::before {
   content: '';
-  position: absolute; inset: 0; border-radius: 9999px; z-index: -1; opacity: .85;
-  transition: opacity .35s ease, transform .35s ease;
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  z-index: -1;
+  opacity: 0.85;
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
-.chip-theme:hover::before { opacity: 1; transform: scale(1.02); }
+.chip-theme:hover::before {
+  opacity: 1;
+  transform: scale(1.02);
+}
 
 /* 首页 */
-.chip-home { background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.14)); border-color: rgba(59,130,246,.35); }
-.chip-home::before { background: radial-gradient(70% 70% at 50% 50%, rgba(59,130,246,.35), transparent 70%); }
+.chip-home {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.28),
+    rgba(255, 255, 255, 0.14)
+  );
+  border-color: rgba(59, 130, 246, 0.35);
+}
+.chip-home::before {
+  background: radial-gradient(
+    70% 70% at 50% 50%,
+    rgba(59, 130, 246, 0.35),
+    transparent 70%
+  );
+}
 
 /* 搜索 */
-.chip-search { background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.14)); border-color: rgba(99,102,241,.35); }
-.chip-search::before { background: radial-gradient(70% 70% at 50% 50%, rgba(99,102,241,.35), transparent 70%); }
+.chip-search {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.28),
+    rgba(255, 255, 255, 0.14)
+  );
+  border-color: rgba(99, 102, 241, 0.35);
+}
+.chip-search::before {
+  background: radial-gradient(
+    70% 70% at 50% 50%,
+    rgba(99, 102, 241, 0.35),
+    transparent 70%
+  );
+}
 
 /* 电影：粉橙霓虹 */
-.chip-movie { background: linear-gradient(90deg, rgba(244,114,182,.35), rgba(251,146,60,.35)); border-color: rgba(244,114,182,.45); }
-.chip-movie::before { background: radial-gradient(70% 70% at 50% 50%, rgba(251,146,60,.45), rgba(244,114,182,.45) 60%, transparent 85%); }
+.chip-movie {
+  background: linear-gradient(
+    90deg,
+    rgba(244, 114, 182, 0.35),
+    rgba(251, 146, 60, 0.35)
+  );
+  border-color: rgba(244, 114, 182, 0.45);
+}
+.chip-movie::before {
+  background: radial-gradient(
+    70% 70% at 50% 50%,
+    rgba(251, 146, 60, 0.45),
+    rgba(244, 114, 182, 0.45) 60%,
+    transparent 85%
+  );
+}
 
 /* 剧集：紫蓝霓虹 */
-.chip-tv { background: linear-gradient(90deg, rgba(168,85,247,.35), rgba(59,130,246,.35)); border-color: rgba(168,85,247,.45); }
-.chip-tv::before { background: radial-gradient(70% 70% at 50% 50%, rgba(59,130,246,.45), rgba(168,85,247,.45) 60%, transparent 85%); }
+.chip-tv {
+  background: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.35),
+    rgba(59, 130, 246, 0.35)
+  );
+  border-color: rgba(168, 85, 247, 0.45);
+}
+.chip-tv::before {
+  background: radial-gradient(
+    70% 70% at 50% 50%,
+    rgba(59, 130, 246, 0.45),
+    rgba(168, 85, 247, 0.45) 60%,
+    transparent 85%
+  );
+}
 
 /* 动漫：青绿霓虹 */
-.chip-anime { background: linear-gradient(90deg, rgba(20,184,166,.35), rgba(16,185,129,.35)); border-color: rgba(16,185,129,.45); }
-.chip-anime::before { background: radial-gradient(70% 70% at 50% 50%, rgba(20,184,166,.45), rgba(16,185,129,.45) 60%, transparent 85%); }
+.chip-anime {
+  background: linear-gradient(
+    90deg,
+    rgba(20, 184, 166, 0.35),
+    rgba(16, 185, 129, 0.35)
+  );
+  border-color: rgba(16, 185, 129, 0.45);
+}
+.chip-anime::before {
+  background: radial-gradient(
+    70% 70% at 50% 50%,
+    rgba(20, 184, 166, 0.45),
+    rgba(16, 185, 129, 0.45) 60%,
+    transparent 85%
+  );
+}
 
 /* 综艺：金柠霓虹 */
-.chip-show { background: linear-gradient(90deg, rgba(250,204,21,.35), rgba(251,191,36,.35)); border-color: rgba(251,191,36,.5); }
-.chip-show::before { background: radial-gradient(70% 70% at 50% 50%, rgba(250,204,21,.45), rgba(251,191,36,.45) 60%, transparent 85%); }
+.chip-show {
+  background: linear-gradient(
+    90deg,
+    rgba(250, 204, 21, 0.35),
+    rgba(251, 191, 36, 0.35)
+  );
+  border-color: rgba(251, 191, 36, 0.5);
+}
+.chip-show::before {
+  background: radial-gradient(
+    70% 70% at 50% 50%,
+    rgba(250, 204, 21, 0.45),
+    rgba(251, 191, 36, 0.45) 60%,
+    transparent 85%
+  );
+}
 
 /* 直播：品红霓虹 */
-.chip-live { background: linear-gradient(90deg, rgba(236,72,153,.35), rgba(244,63,94,.35)); border-color: rgba(236,72,153,.5); }
-.chip-live::before { background: radial-gradient(70% 70% at 50% 50%, rgba(244,63,94,.45), rgba(236,72,153,.45) 60%, transparent 85%); }
+.chip-live {
+  background: linear-gradient(
+    90deg,
+    rgba(236, 72, 153, 0.35),
+    rgba(244, 63, 94, 0.35)
+  );
+  border-color: rgba(236, 72, 153, 0.5);
+}
+.chip-live::before {
+  background: radial-gradient(
+    70% 70% at 50% 50%,
+    rgba(244, 63, 94, 0.45),
+    rgba(236, 72, 153, 0.45) 60%,
+    transparent 85%
+  );
+}
 
 /* 移动端底部导航霓虹主题 */
 .mbnav {
@@ -121,39 +256,82 @@ body {
 }
 .mbnav-item {
   position: relative;
-  transition: transform .25s ease, color .25s ease;
+  transition: transform 0.25s ease, color 0.25s ease;
 }
 .mbnav-item::after {
   content: '';
-  position: absolute; inset: auto 15% 6px 15%; height: 6px; border-radius: 9999px;
-  background: radial-gradient(50% 100% at 50% 100%, currentColor, transparent 70%);
-  opacity: 0; filter: blur(6px);
-  transition: opacity .25s ease, transform .25s ease;
+  position: absolute;
+  inset: auto 15% 6px 15%;
+  height: 6px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    50% 100% at 50% 100%,
+    currentColor,
+    transparent 70%
+  );
+  opacity: 0;
+  filter: blur(6px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
-.mbnav-item:hover { transform: translateY(-2px); }
-.mbnav-item:hover::after { opacity: .55; transform: translateY(2px); }
-.mbnav-item-active { text-shadow: 0 0 8px currentColor; }
+.mbnav-item:hover {
+  transform: translateY(-2px);
+}
+.mbnav-item:hover::after {
+  opacity: 0.55;
+  transform: translateY(2px);
+}
+.mbnav-item-active {
+  text-shadow: 0 0 8px currentColor;
+}
 
 /* 底部导航分类色系（与桌面一致） */
-.mb-home { color: #3b82f6; }
-.mb-search { color: #6366f1; }
-.mb-movie { color: #f59e0b; }
-.mb-tv { color: #a855f7; }
-.mb-anime { color: #10b981; }
-.mb-show { color: #facc15; }
-.mb-live { color: #ec4899; }
+.mb-home {
+  color: #3b82f6;
+}
+.mb-search {
+  color: #6366f1;
+}
+.mb-movie {
+  color: #f59e0b;
+}
+.mb-tv {
+  color: #a855f7;
+}
+.mb-anime {
+  color: #10b981;
+}
+.mb-show {
+  color: #facc15;
+}
+.mb-live {
+  color: #ec4899;
+}
 
 /* 按钮/卡片悬停高光轨迹 */
 /* 移除 sweeping 高光轨迹效果（保留占位，避免类名报错） */
-.hover-beam { position: relative; }
-.hover-beam::before { content: none; }
+.hover-beam {
+  position: relative;
+}
+.hover-beam::before {
+  content: none;
+}
 
 /* 过场加强：淡入上滑组合 */
 @keyframes superFadeSlide {
-  from { opacity: 0; transform: translateY(14px) scale(0.99); filter: blur(2px); }
-  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.99);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
 }
-.enter-animate { animation: superFadeSlide .5s cubic-bezier(.22,.61,.36,1) both; }
+.enter-animate {
+  animation: superFadeSlide 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
 
 html:not(.dark) body {
   background: linear-gradient(
@@ -173,24 +351,43 @@ html:not(.dark) body {
   content: '';
   position: fixed;
   inset: 0;
-  background: radial-gradient(800px 800px at 10% 10%, rgba(99,102,241,0.08), transparent 60%),
-              radial-gradient(800px 800px at 90% 20%, rgba(16,185,129,0.08), transparent 60%),
-              radial-gradient(800px 800px at 50% 90%, rgba(236,72,153,0.08), transparent 60%);
+  background: radial-gradient(
+      800px 800px at 10% 10%,
+      rgba(99, 102, 241, 0.08),
+      transparent 60%
+    ),
+    radial-gradient(
+      800px 800px at 90% 20%,
+      rgba(16, 185, 129, 0.08),
+      transparent 60%
+    ),
+    radial-gradient(
+      800px 800px at 50% 90%,
+      rgba(236, 72, 153, 0.08),
+      transparent 60%
+    );
   pointer-events: none;
   /* 降低动态背景的动画强度，避免强烈高光划过体验 */
   animation: bgFloat 24s ease-in-out infinite alternate;
 }
 
 @keyframes bgFloat {
-  0% { transform: translateY(-10px) scale(1); filter: hue-rotate(0deg); }
-  100% { transform: translateY(10px) scale(1.02); filter: hue-rotate(20deg); }
+  0% {
+    transform: translateY(-10px) scale(1);
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    transform: translateY(10px) scale(1.02);
+    filter: hue-rotate(20deg);
+  }
 }
 
 /* Card base glassmorphism */
 .glass-card {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.24);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(20px);
   border-radius: 1rem;
 }
@@ -330,5 +527,87 @@ div[data-media-provider] video {
 
   .art-control-volume {
     display: none !important;
+  }
+}
+
+/* DecoTV 炫酷动画效果 */
+@keyframes blob {
+  0%,
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+}
+
+@keyframes neon-pulse {
+  0%,
+  100% {
+    text-shadow: 0 0 5px currentColor, 0 0 10px currentColor,
+      0 0 15px currentColor, 0 0 20px currentColor;
+  }
+  50% {
+    text-shadow: 0 0 2px currentColor, 0 0 5px currentColor,
+      0 0 8px currentColor, 0 0 12px currentColor;
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+.animation-delay-1000 {
+  animation-delay: 1s;
+}
+
+.animation-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animation-delay-400 {
+  animation-delay: 0.4s;
+}
+
+.animation-delay-600 {
+  animation-delay: 0.6s;
+}
+
+/* 霓虹灯渐变文字效果增强 */
+.neon-gradient-text {
+  background: linear-gradient(
+    90deg,
+    #00f5ff,
+    #8a2be2,
+    #ff1493,
+    #ffd700,
+    #00f5ff
+  );
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: neon-gradient 3s ease-in-out infinite,
+    neon-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes neon-gradient {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
   }
 }
