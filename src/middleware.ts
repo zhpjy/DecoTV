@@ -125,6 +125,8 @@ function shouldSkipAuth(pathname: string): boolean {
     '/icons/',
     '/logo.png',
     '/screenshot.png',
+    '/api/tvbox/config',
+    '/api/tvbox/diagnose',
   ];
 
   return skipPaths.some((path) => pathname.startsWith(path));
