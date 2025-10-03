@@ -203,18 +203,8 @@ export async function GET(req: NextRequest) {
       responseContent = Buffer.from(jsonString, 'utf-8').toString('base64');
       contentType = 'text/plain; charset=utf-8';
     } else {
-      // 标准JSON格式 - 确保正确格式化
-      responseContent = JSON.stringify(
-        tvboxConfig,
-        (key, value) => {
-          // 避免循环引用
-          if (value === null || value === undefined) {
-            return value;
-          }
-          return value;
-        },
-        2
-      );
+      // 标准JSON格式 - 使用紧凑输出，部分 TVBox 对格式比较敏感
+      responseContent = JSON.stringify(tvboxConfig);
       // 某些 TVBox 分支对 application/json 处理有兼容性问题，改为 text/plain
       contentType = 'text/plain; charset=utf-8';
     }
