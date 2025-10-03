@@ -110,13 +110,19 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
             >
               <Link
                 href={item.href}
-                className={`flex flex-col items-center justify-center w-full h-14 gap-1 text-xs mbnav-item ${theme} ${active ? 'mbnav-item-active neon-flicker' : ''}`}
+                className={`flex flex-col items-center justify-center w-full h-14 gap-1 text-xs mbnav-item ${theme} ${
+                  active ? 'mbnav-item-active' : ''
+                }`}
               >
                 <item.icon
-                  className={`h-6 w-6 ${active ? 'text-current' : 'text-gray-500 dark:text-gray-400'}`}
+                  className={`h-6 w-6 ${
+                    active ? 'text-current' : 'text-gray-500 dark:text-gray-400'
+                  }`}
                 />
                 <span
-                  className={`${active ? 'text-current' : 'text-gray-600 dark:text-gray-300'}`}
+                  className={`${
+                    active ? 'text-current' : 'text-gray-600 dark:text-gray-300'
+                  }`}
                 >
                   {item.label}
                 </span>

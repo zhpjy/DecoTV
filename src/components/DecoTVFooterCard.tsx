@@ -34,7 +34,7 @@ const DecoTVFooterCard = () => {
     >
       {/* 背景渐变和光效 */}
       <div className='relative mx-4 sm:mx-6 lg:mx-auto lg:max-w-4xl mb-8 sm:mb-12'>
-        <div className='relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 dark:from-gray-900 dark:via-purple-900 dark:to-gray-900 rounded-3xl p-8 sm:p-12 lg:p-16 overflow-hidden shadow-2xl'>
+        <div className='relative bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 dark:from-gray-900/95 dark:via-purple-900/95 dark:to-gray-900/95 rounded-3xl p-8 sm:p-12 lg:p-16 overflow-hidden shadow-2xl backdrop-blur-sm border border-white/10'>
           {/* 动态背景光效 */}
           <div className='absolute inset-0 opacity-30'>
             <div className='absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob'></div>
@@ -54,12 +54,16 @@ const DecoTVFooterCard = () => {
           <div className='relative z-10 text-center'>
             {/* DecoTV 标题 */}
             <div className='mb-6 sm:mb-8'>
-              <h2 className='text-4xl sm:text-6xl lg:text-7xl font-black tracking-wider'>
-                <span className='bg-gradient-to-r from-cyan-300 via-purple-400 to-pink-400 bg-clip-text text-transparent relative'>
-                  {/* 发光效果 */}
-                  <span className='absolute inset-0 bg-gradient-to-r from-cyan-300 via-purple-400 to-pink-400 bg-clip-text text-transparent blur-lg opacity-50 animate-pulse'></span>
-                  <span className='relative drop-shadow-2xl'>DecoTV</span>
+              <h2 className='text-4xl sm:text-6xl lg:text-7xl font-black tracking-wider relative'>
+                <span className='bg-gradient-to-r from-cyan-300 via-purple-400 to-pink-400 bg-clip-text text-transparent relative drop-shadow-2xl'>
+                  DecoTV
                 </span>
+                {/* 背景文字增强可读性 */}
+                <span className='absolute inset-0 text-white/10 blur-sm font-black tracking-wider'>
+                  DecoTV
+                </span>
+                {/* 发光效果 */}
+                <span className='absolute inset-0 bg-gradient-to-r from-cyan-300 via-purple-400 to-pink-400 bg-clip-text text-transparent blur-lg opacity-30 animate-pulse'></span>
               </h2>
 
               {/* 装饰性线条 */}
@@ -74,12 +78,17 @@ const DecoTVFooterCard = () => {
 
             {/* Power by Katelya */}
             <div className='space-y-2 sm:space-y-3'>
-              <p className='text-lg sm:text-xl lg:text-2xl font-medium bg-gradient-to-r from-gray-300 to-white bg-clip-text text-transparent'>
+              <p className='text-lg sm:text-xl lg:text-2xl font-medium text-white/90 drop-shadow-lg'>
                 Powered by
               </p>
-              <p className='text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-yellow-300 via-orange-400 to-red-400 bg-clip-text text-transparent relative'>
-                <span className='absolute inset-0 bg-gradient-to-r from-yellow-300 via-orange-400 to-red-400 bg-clip-text text-transparent blur-sm opacity-60'></span>
-                <span className='relative'>Katelya</span>
+              <p className='text-2xl sm:text-3xl lg:text-4xl font-bold relative'>
+                <span className='bg-gradient-to-r from-yellow-300 via-orange-400 to-red-400 bg-clip-text text-transparent drop-shadow-lg'>
+                  Katelya
+                </span>
+                {/* 背景文字增强可读性 */}
+                <span className='absolute inset-0 text-white/20 blur-sm font-bold'>
+                  Katelya
+                </span>
               </p>
             </div>
 
