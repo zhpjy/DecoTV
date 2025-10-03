@@ -2811,6 +2811,44 @@ const VideoSourceConfig = ({
     });
   };
 
+  // 一键插入CSP模板
+  const handleInsertCspTemplate = async () => {
+    const cspTemplate = {
+      name: 'CSP示例源',
+      key: `csp_demo_${Date.now()}`, // 使用时间戳避免重复key
+      api: 'csp_AppYsV2',
+      detail: JSON.stringify({
+        jar: 'https://gh-proxy.com/raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
+        ext: 'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/json/config.json',
+        type: 3,
+      }),
+      disabled: false,
+      from: 'config',
+    };
+
+    try {
+      await withLoading('insertCspTemplate', async () => {
+        await callSourceApi({
+          action: 'add',
+          source: cspTemplate,
+        });
+      });
+
+      showAlert({
+        type: 'success',
+        title: 'CSP模板插入成功',
+        message: '已成功插入CSP示例源，可用于验证CSP/jar功能',
+        timer: 3000,
+      });
+    } catch (err) {
+      showAlert({
+        type: 'error',
+        title: 'CSP模板插入失败',
+        message: err instanceof Error ? err.message : '插入失败',
+      });
+    }
+  };
+
   // 获取有效性状态显示
   const getValidationStatus = (sourceKey: string) => {
     const result = validationResults.find((r) => r.key === sourceKey);
@@ -3156,6 +3194,28 @@ const VideoSourceConfig = ({
                 </>
               ) : (
                 '有效性检测'
+              )}
+            </button>
+            <button
+              onClick={handleInsertCspTemplate}
+              disabled={isLoading('insertCspTemplate')}
+              className={`px-3 py-1 text-sm rounded-lg transition-colors flex items-center space-x-1 ${
+                isLoading('insertCspTemplate')
+                  ? buttonStyles.disabled
+                  : buttonStyles.roundedPurple.replace(
+                      'inline-flex items-center px-3 py-1.5 rounded-full text-xs',
+                      'px-3 py-1 text-sm rounded-lg'
+                    )
+              }`}
+              title='一键插入CSP模板源，用于快速验证CSP/jar功能'
+            >
+              {isLoading('insertCspTemplate') ? (
+                <>
+                  <div className='w-3 h-3 border border-white border-t-transparent rounded-full animate-spin'></div>
+                  <span>插入中...</span>
+                </>
+              ) : (
+                '插入CSP模板'
               )}
             </button>
             <button
@@ -5288,6 +5348,8 @@ function AdminPageClient() {
 
   // TVBox 配置相关状态
   const [tvboxFormat, setTvboxFormat] = useState<'json' | 'base64'>('json');
+  const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
 
   // 获取管理员配置
   // showLoading 用于控制是否在请求期间显示整体加载骨架。
@@ -5356,6 +5418,40 @@ function AdminPageClient() {
       showSuccess('复制成功！订阅地址已复制到剪贴板', showAlert);
     } catch (err) {
       showError('复制失败，请手动复制地址', showAlert);
+    }
+  };
+
+  // 连通性体检功能
+  const handleDiagnosis = async () => {
+    setIsDiagnosing(true);
+    try {
+      const response = await fetch('/api/tvbox/diagnose');
+      const result = await response.json();
+      setDiagnosisResult(result);
+
+      if (result.pass) {
+        showAlert({
+          type: 'success',
+          title: '🟢 配置健康检查通过',
+          message: '配置可正常访问，JSON格式有效，连通性良好',
+          timer: 3000,
+        });
+      } else {
+        const issues = result.issues.join('；');
+        showAlert({
+          type: 'error',
+          title: '🔴 配置健康检查失败',
+          message: `发现问题：${issues}`,
+        });
+      }
+    } catch (error) {
+      showAlert({
+        type: 'error',
+        title: '体检失败',
+        message: error instanceof Error ? error.message : '网络错误',
+      });
+    } finally {
+      setIsDiagnosing(false);
     }
   };
 
@@ -5593,6 +5689,78 @@ function AdminPageClient() {
                   >
                     测试
                   </button>
+                </div>
+
+                {/* 连通性体检区域 */}
+                <div className='space-y-3'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                      连通性体检：
+                    </span>
+                    <button
+                      onClick={handleDiagnosis}
+                      disabled={isDiagnosing}
+                      className={`px-4 py-2 rounded-md transition-colors text-sm font-medium flex items-center space-x-2 ${
+                        isDiagnosing
+                          ? 'bg-gray-400 text-white cursor-not-allowed'
+                          : 'bg-purple-600 hover:bg-purple-700 text-white'
+                      }`}
+                    >
+                      {isDiagnosing ? (
+                        <>
+                          <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                          <span>体检中...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🩺</span>
+                          <span>一键体检</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* 体检结果展示 */}
+                  {diagnosisResult && (
+                    <div
+                      className={`p-3 rounded-lg border-l-4 ${
+                        diagnosisResult.pass
+                          ? 'bg-green-50 dark:bg-green-900/20 border-green-500 text-green-800 dark:text-green-200'
+                          : 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-800 dark:text-red-200'
+                      }`}
+                    >
+                      <div className='flex items-center space-x-2 mb-2'>
+                        <span className='text-lg'>
+                          {diagnosisResult.pass ? '🟢' : '🔴'}
+                        </span>
+                        <span className='font-medium text-sm'>
+                          {diagnosisResult.pass ? '体检通过' : '体检失败'}
+                        </span>
+                      </div>
+                      <div className='text-xs space-y-1'>
+                        <div>状态码: {diagnosisResult.status || 'N/A'}</div>
+                        <div>
+                          内容类型: {diagnosisResult.contentType || 'N/A'}
+                        </div>
+                        <div>
+                          JSON有效: {diagnosisResult.hasJson ? '✓' : '✗'}
+                        </div>
+                        {diagnosisResult.issues &&
+                          diagnosisResult.issues.length > 0 && (
+                            <div>
+                              <div className='font-medium'>问题:</div>
+                              <ul className='ml-4 list-disc'>
+                                {diagnosisResult.issues.map(
+                                  (issue: string, index: number) => (
+                                    <li key={index}>{issue}</li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <ul className='list-disc pl-6 text-sm text-gray-500 dark:text-gray-400 space-y-1'>
                   <li>常见入口：设置 → 订阅管理 → 添加订阅。</li>
