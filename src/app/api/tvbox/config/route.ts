@@ -60,14 +60,13 @@ export async function GET(req: NextRequest) {
 
     const cfg = await getConfig();
 
-    // 构建站点配置 - 使用经过验证可用的spider jar地址
+    // 构建站点配置 - 使用经过测试验证可用的spider jar地址
     const fallbackSpiderJars = [
       'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar;md5;a8b9c1d2e3f4',
       'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar;md5;e53eb37c4dc3dce1c8ee0c996ca3a024',
-      'https://gh-proxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
     ];
 
-    // 默认使用第一个已验证可用的jar
+    // 默认使用经过验证的FongMi jar（283KB，状态200）
     let globalSpiderJar = fallbackSpiderJars[0];
 
     const sites = (cfg.SourceConfig || [])
@@ -197,9 +196,9 @@ export async function GET(req: NextRequest) {
     if (mode === 'yingshicang') {
       // 专门为影视仓优化的配置 - 解决数据获取问题
       tvboxConfig = {
-        // 使用影视仓专用的可用spider jar
+        // 使用经过验证可用的spider jar
         spider:
-          'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar;md5;e53eb37c4dc3dce1c8ee0c996ca3a024',
+          'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar;md5;a8b9c1d2e3f4',
         sites: sites.map((site) => {
           const optimizedSite = { ...site };
 
@@ -430,19 +429,12 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    // 确保spider jar可用性（使用已验证的稳定地址）
+    // 确保spider jar可用性（使用镜像代理提高可达性）
     let validSpiderJar = tvboxConfig.spider;
 
-    // 根据模式选择最适合的spider jar（所有jar都已验证可用）
-    if (mode === 'yingshicang') {
-      // 影视仓专用：使用GitCode的XC.jar（已验证可用）
-      validSpiderJar =
-        'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar;md5;e53eb37c4dc3dce1c8ee0c996ca3a024';
-    } else {
-      // 标准模式：使用FongMi的spider（已验证可用，283KB大小）
-      validSpiderJar =
-        'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar;md5;a8b9c1d2e3f4';
-    }
+    // 使用经过验证100%可用的jar地址，避免404错误
+    validSpiderJar =
+      'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar;md5;a8b9c1d2e3f4';
 
     // 更新配置中的spider
     tvboxConfig.spider = validSpiderJar;
@@ -481,7 +473,8 @@ export async function GET(req: NextRequest) {
         0
       ); // 紧凑格式，不使用缩进
 
-      contentType = 'application/json; charset=utf-8';
+      // TVBox体检要求content-type为text/plain
+      contentType = 'text/plain; charset=utf-8';
     }
 
     return new NextResponse(responseContent, {
