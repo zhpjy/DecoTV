@@ -2816,13 +2816,16 @@ const VideoSourceConfig = ({
   // 一键插入CSP模板
   const handleInsertCspTemplate = async () => {
     const cspTemplate = {
-      name: 'CSP示例源',
+      name: 'CSP示例源（影视仓兼容）',
       key: `csp_demo_${Date.now()}`, // 使用时间戳避免重复key
       api: 'csp_AppYsV2',
       detail: JSON.stringify({
-        jar: 'https://gh-proxy.com/raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
-        ext: 'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/json/config.json',
+        jar: 'https://gh-proxy.com/raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar;md5;a8b9c1d2e3f4',
+        ext: 'https://gh-proxy.com/raw.githubusercontent.com/FongMi/CatVodSpider/main/json/config.json',
         type: 3,
+        searchable: 1,
+        quickSearch: 1,
+        filterable: 1,
       }),
       disabled: false,
       from: 'config',
@@ -5353,6 +5356,9 @@ function AdminPageClient() {
 
   // TVBox 配置相关状态
   const [tvboxFormat, setTvboxFormat] = useState<'json' | 'base64'>('json');
+  const [tvboxMode, setTvboxMode] = useState<
+    'standard' | 'safe' | 'yingshicang'
+  >('standard');
   const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
 
@@ -5413,7 +5419,8 @@ function AdminPageClient() {
       }
     }
     // 始终附带 format 参数，确保 JSON 时为 ?format=json
-    return `${baseUrl}/api/tvbox/config?format=${tvboxFormat}`;
+    const modeParam = tvboxMode !== 'standard' ? `&mode=${tvboxMode}` : '';
+    return `${baseUrl}/api/tvbox/config?format=${tvboxFormat}${modeParam}`;
   };
 
   const handleTvboxCopy = async () => {
@@ -5671,6 +5678,90 @@ function AdminPageClient() {
                       <span className='text-sm text-gray-700 dark:text-gray-300'>
                         Base64 格式
                       </span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* 配置模式选择 */}
+                <div className='space-y-2'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    配置模式：
+                  </label>
+                  <div className='space-y-2'>
+                    <label className='flex items-start space-x-3'>
+                      <input
+                        type='radio'
+                        name='tvboxMode'
+                        value='standard'
+                        checked={tvboxMode === 'standard'}
+                        onChange={(e) =>
+                          setTvboxMode(
+                            e.target.value as
+                              | 'standard'
+                              | 'safe'
+                              | 'yingshicang'
+                          )
+                        }
+                        className='mt-0.5 text-blue-600 focus:ring-blue-500'
+                      />
+                      <div>
+                        <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                          标准模式
+                        </span>
+                        <p className='text-xs text-gray-500 dark:text-gray-400'>
+                          完整配置，包含所有优化功能，适用于TVBox、猫影视等
+                        </p>
+                      </div>
+                    </label>
+                    <label className='flex items-start space-x-3'>
+                      <input
+                        type='radio'
+                        name='tvboxMode'
+                        value='yingshicang'
+                        checked={tvboxMode === 'yingshicang'}
+                        onChange={(e) =>
+                          setTvboxMode(
+                            e.target.value as
+                              | 'standard'
+                              | 'safe'
+                              | 'yingshicang'
+                          )
+                        }
+                        className='mt-0.5 text-blue-600 focus:ring-blue-500'
+                      />
+                      <div>
+                        <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                          影视仓优化模式 🔥
+                        </span>
+                        <p className='text-xs text-gray-500 dark:text-gray-400'>
+                          专门针对影视仓APP优化，解决jar错误和兼容性问题
+                        </p>
+                      </div>
+                    </label>
+                    <label className='flex items-start space-x-3'>
+                      <input
+                        type='radio'
+                        name='tvboxMode'
+                        value='safe'
+                        checked={tvboxMode === 'safe'}
+                        onChange={(e) =>
+                          setTvboxMode(
+                            e.target.value as
+                              | 'standard'
+                              | 'safe'
+                              | 'yingshicang'
+                          )
+                        }
+                        className='mt-0.5 text-blue-600 focus:ring-blue-500'
+                      />
+                      <div>
+                        <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                          兼容模式
+                        </span>
+                        <p className='text-xs text-gray-500 dark:text-gray-400'>
+                          简化配置，仅包含必要字段，适用于老版本或兼容性较差的应用
+                        </p>
+                      </div>
                     </label>
                   </div>
                 </div>
