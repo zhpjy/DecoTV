@@ -118,9 +118,16 @@ export async function GET(req: NextRequest) {
       // 成功获取远程 jar，直接使用远程 URL（公网地址）
       globalSpiderJar = `${jarInfo.source};md5;${jarInfo.md5}`;
     } else {
-      // 远程失败，使用已知稳定的公网 jar（不会 private/404）
+      // 远程失败，使用多个备选方案，提升成功率
+      const fallbackJars = [
+        'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar;md5;e53eb37c4dc3dce1c8ee0c996ca3a024',
+        'https://gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar;md5;e53eb37c4dc3dce1c8ee0c996ca3a024',
+        'https://cdn.jsdelivr.net/gh/hjdhnx/dr_py@main/js/drpy.jar;md5;' +
+          jarInfo.md5,
+      ];
+      // 随机选择一个备选jar，避免单点失败
       globalSpiderJar =
-        'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar;md5;e53eb37c4dc3dce1c8ee0c996ca3a024';
+        fallbackJars[Math.floor(Math.random() * fallbackJars.length)];
     }
 
     const sites = (cfg.SourceConfig || [])
@@ -139,27 +146,40 @@ export async function GET(req: NextRequest) {
           changeable: 1, // 允许换源
         };
 
-        // 根据不同API类型设置不同的请求头和参数
+        // 优化：根据不同API类型设置请求头，提升稳定性和切换体验
         if (apiType === 0 || apiType === 1) {
-          // 苹果CMS接口需要标准请求头
+          // 苹果CMS接口优化配置
           site.header = {
             'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+              'Mozilla/5.0 (Linux; Android 11; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36',
+            Accept: 'application/json, text/plain, */*',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Cache-Control': 'no-cache',
+            Connection: 'close', // 避免连接复用问题
           };
 
-          // 添加标准搜索参数（苹果CMS标准）
+          // 优化搜索参数配置
           if (!s.api.includes('?')) {
-            // 如果API没有参数，添加标准参数
             if (apiType === 1) {
-              // JSON接口
+              // JSON接口标准参数
               site.api = s.api + (s.api.endsWith('/') ? '' : '/') + '?ac=list';
             }
           }
+
+          // 增加超时和重试配置
+          site.timeout = 10000; // 10秒超时
+          site.retry = 2; // 重试2次
         } else if (apiType === 3) {
-          // CSP源配置
+          // CSP源优化配置
           site.header = {
             'User-Agent': 'okhttp/3.15',
+            Accept: '*/*',
+            Connection: 'close',
           };
+
+          // CSP源通常更稳定，设置更长超时
+          site.timeout = 15000; // 15秒超时
+          site.retry = 1; // 重试1次
         }
 
         // 解析 detail 扩展配置
@@ -255,35 +275,70 @@ export async function GET(req: NextRequest) {
         sites: sites.map((site) => {
           const optimizedSite = { ...site };
 
-          // 影视仓对某些字段敏感，需要精确配置
+          // 影视仓优化：保留必要字段，删除可能冲突的字段
           delete optimizedSite.timeout;
+          delete optimizedSite.retry;
           delete optimizedSite.changeable;
 
-          // 保持简单的请求头
+          // 影视仓稳定配置
           if (optimizedSite.type === 3) {
-            // CSP源保持okhttp
-            optimizedSite.header = { 'User-Agent': 'okhttp/3.15' };
+            // CSP源：简化配置，提升兼容性
+            optimizedSite.header = {
+              'User-Agent': 'okhttp/3.15',
+              Accept: '*/*',
+            };
           } else {
-            // 苹果CMS接口使用标准浏览器UA
+            // 苹果CMS：使用移动端UA，提升兼容性
             optimizedSite.header = {
               'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Mozilla/5.0 (Linux; Android 11; SM-G973F) AppleWebKit/537.36',
+              Accept: 'application/json, */*',
+              Connection: 'close',
             };
           }
 
-          // 确保搜索功能正常
+          // 强制启用所有搜索功能，提升切换体验
           optimizedSite.searchable = 1;
           optimizedSite.quickSearch = 1;
           optimizedSite.filterable = 1;
+
+          // 影视仓特有优化
+          optimizedSite.playerType = 1; // 强制使用系统播放器
+          optimizedSite.playUrl = ''; // 清空可能的播放链接冲突
 
           return optimizedSite;
         }),
         lives,
         parses: [
-          { name: '线路一', type: 0, url: 'https://jx.xmflv.com/?url=' },
-          { name: '线路二', type: 0, url: 'https://www.yemu.xyz/?url=' },
-          { name: '线路三', type: 0, url: 'https://jx.aidouer.net/?url=' },
-          { name: '线路四', type: 0, url: 'https://www.8090g.cn/?url=' },
+          {
+            name: '默认解析',
+            type: 0,
+            url: 'https://jx.xmflv.com/?url=',
+            ext: {
+              flag: ['qq', 'qiyi', 'mgtv', 'youku', 'letv', 'sohu', 'iqiyi'],
+              header: { 'User-Agent': 'Mozilla/5.0' },
+            },
+          },
+          {
+            name: '备用解析',
+            type: 0,
+            url: 'https://www.yemu.xyz/?url=',
+            ext: {
+              flag: ['qq', 'qiyi', 'mgtv', 'youku', 'letv'],
+              header: { 'User-Agent': 'Mozilla/5.0' },
+            },
+          },
+          {
+            name: '高速解析',
+            type: 0,
+            url: 'https://jx.aidouer.net/?url=',
+            ext: {
+              flag: ['qq', 'qiyi', 'mgtv', 'youku'],
+              header: { 'User-Agent': 'Mozilla/5.0' },
+            },
+          },
+          { name: 'Json并发', type: 2, url: 'Parallel' },
+          { name: 'Json轮询', type: 2, url: 'Sequence' },
         ],
         flags: [
           'youku',
@@ -321,6 +376,49 @@ export async function GET(req: NextRequest) {
         // 添加影视仓专用的壁纸和其他配置
         wallpaper: 'https://picsum.photos/1920/1080/?blur=1',
         maxHomeVideoContent: '20',
+      };
+    } else if (mode === 'fast' || mode === 'optimize') {
+      // 快速切换优化模式：专门针对资源源切换体验优化
+      tvboxConfig = {
+        spider: globalSpiderJar,
+        sites: sites.map((site) => {
+          const fastSite = { ...site };
+          // 快速模式：移除可能导致卡顿的配置
+          delete fastSite.timeout;
+          delete fastSite.retry;
+
+          // 优化请求头，提升响应速度
+          if (fastSite.type === 3) {
+            fastSite.header = { 'User-Agent': 'okhttp/3.15' };
+          } else {
+            fastSite.header = {
+              'User-Agent':
+                'Mozilla/5.0 (Linux; Android 11) AppleWebKit/537.36',
+              Connection: 'close',
+            };
+          }
+
+          // 强制启用快速切换相关功能
+          fastSite.searchable = 1;
+          fastSite.quickSearch = 1;
+          fastSite.filterable = 1;
+          fastSite.changeable = 1;
+
+          return fastSite;
+        }),
+        lives,
+        parses: [
+          {
+            name: '极速解析',
+            type: 0,
+            url: 'https://jx.xmflv.com/?url=',
+            ext: { flag: ['all'] },
+          },
+          { name: 'Json并发', type: 2, url: 'Parallel' },
+        ],
+        flags: ['youku', 'qq', 'iqiyi', 'qiyi', 'letv', 'sohu', 'mgtv'],
+        wallpaper: '', // 移除壁纸加快加载
+        maxHomeVideoContent: '15', // 减少首页内容，提升加载速度
       };
     } else if (mode === 'safe' || mode === 'min') {
       // 仅输出最必要字段，避免解析器因字段不兼容而失败

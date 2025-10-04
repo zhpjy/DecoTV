@@ -6,16 +6,23 @@
  */
 import crypto from 'crypto';
 
-// Remote jar candidates (order by stability). Update list as needed.
+// Remote jar candidates (order by stability and SSL compatibility)
+// 优先使用支持 HTTPS 且稳定的源，减少 SSL handshake 错误
 const CANDIDATES: string[] = [
-  // 使用实际存在的 jar 文件
+  // 优先：国内稳定源（避免 SSL 问题）
   'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar',
-  'https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
-  'https://ghproxy.com/https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
+  'https://gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar',
+
+  // jsDelivr CDN（全球加速，SSL 稳定）
   'https://cdn.jsdelivr.net/gh/hjdhnx/dr_py@main/js/drpy.jar',
-  // 备用社区 jar
+  'https://cdn.jsdelivr.net/gh/FongMi/CatVodSpider@main/jar/spider.jar',
+
+  // GitHub 原始链接（备用）
+  'https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
   'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/spider.jar',
-  'https://ghproxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/spider.jar',
+
+  // 代理源（最后备用）
+  'https://ghproxy.com/https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
 ];
 
 // 内置稳定 JAR 作为最终 fallback - 提取自实际工作的 spider.jar
@@ -39,30 +46,27 @@ const TTL = 6 * 60 * 60 * 1000; // 6h
 
 async function fetchRemote(
   url: string,
-  timeoutMs = 10000
+  timeoutMs = 15000
 ): Promise<Buffer | null> {
   try {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeoutMs);
 
-    // 先用 HEAD 检查文件是否存在
-    const headResp = await fetch(url, {
-      method: 'HEAD',
-      signal: controller.signal,
-    });
-    if (!headResp.ok || headResp.status >= 400) {
-      clearTimeout(id);
-      return null;
-    }
+    // 优化的请求头，提升兼容性，减少 SSL 问题
+    const headers = {
+      'User-Agent':
+        'Mozilla/5.0 (Linux; Android 11; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36',
+      Accept: '*/*',
+      'Accept-Encoding': 'identity', // 避免压缩导致的问题
+      Connection: 'close', // 避免连接复用问题
+      'Cache-Control': 'no-cache',
+    };
 
-    // 文件存在，获取完整内容
+    // 直接获取文件内容，跳过 HEAD 检查（减少请求次数）
     const resp = await fetch(url, {
       method: 'GET',
       signal: controller.signal,
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
+      headers,
     });
     clearTimeout(id);
 
@@ -71,7 +75,8 @@ async function fetchRemote(
     if (ab.byteLength < 1000) return null; // jar 文件应该至少 1KB
 
     return Buffer.from(ab);
-  } catch {
+  } catch (error) {
+    // 记录但不抛出错误，让系统尝试下一个候选
     return null;
   }
 }

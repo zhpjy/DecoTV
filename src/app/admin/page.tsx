@@ -5357,8 +5357,8 @@ function AdminPageClient() {
   // TVBox 配置相关状态
   const [tvboxFormat, setTvboxFormat] = useState<'json' | 'base64'>('json');
   const [tvboxMode, setTvboxMode] = useState<
-    'standard' | 'safe' | 'yingshicang'
-  >('standard');
+    'standard' | 'safe' | 'yingshicang' | 'fast'
+  >('fast');
   const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
 
@@ -5700,6 +5700,7 @@ function AdminPageClient() {
                               | 'standard'
                               | 'safe'
                               | 'yingshicang'
+                              | 'fast'
                           )
                         }
                         className='mt-0.5 text-blue-600 focus:ring-blue-500'
@@ -5725,6 +5726,7 @@ function AdminPageClient() {
                               | 'standard'
                               | 'safe'
                               | 'yingshicang'
+                              | 'fast'
                           )
                         }
                         className='mt-0.5 text-blue-600 focus:ring-blue-500'
@@ -5742,6 +5744,32 @@ function AdminPageClient() {
                       <input
                         type='radio'
                         name='tvboxMode'
+                        value='fast'
+                        checked={tvboxMode === 'fast'}
+                        onChange={(e) =>
+                          setTvboxMode(
+                            e.target.value as
+                              | 'standard'
+                              | 'safe'
+                              | 'yingshicang'
+                              | 'fast'
+                          )
+                        }
+                        className='mt-0.5 text-blue-600 focus:ring-blue-500'
+                      />
+                      <div>
+                        <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                          快速切换模式 ⚡
+                        </span>
+                        <p className='text-xs text-gray-500 dark:text-gray-400'>
+                          专门优化资源切换速度，解决SSL错误和卡顿问题，推荐使用
+                        </p>
+                      </div>
+                    </label>
+                    <label className='flex items-start space-x-3'>
+                      <input
+                        type='radio'
+                        name='tvboxMode'
                         value='safe'
                         checked={tvboxMode === 'safe'}
                         onChange={(e) =>
@@ -5750,6 +5778,7 @@ function AdminPageClient() {
                               | 'standard'
                               | 'safe'
                               | 'yingshicang'
+                              | 'fast'
                           )
                         }
                         className='mt-0.5 text-blue-600 focus:ring-blue-500'
