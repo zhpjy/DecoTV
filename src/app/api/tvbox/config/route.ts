@@ -17,12 +17,28 @@ import { getSpiderJar } from '@/lib/spiderJar';
 // 远程候选列表（按稳定性 & 全球可达性排序）
 const REMOTE_SPIDER_CANDIDATES: { url: string; md5?: string }[] = [
   {
-    url: 'https://cdn.jsdelivr.net/gh/FongMi/CatVodSpider@main/jar/custom_spider.jar',
-    md5: 'a8b9c1d2e3f4',
+    url: 'https://deco-spider.oss-cn-hangzhou.aliyuncs.com/XC.jar',
+    md5: 'e53eb37c4dc3dce1c8ee0c996ca3a024',
   },
   {
-    url: 'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
-    md5: 'a8b9c1d2e3f4',
+    url: 'https://deco-spider-1250000000.cos.ap-shanghai.myqcloud.com/XC.jar',
+    md5: 'e53eb37c4dc3dce1c8ee0c996ca3a024',
+  },
+  {
+    url: 'https://cdn.gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar',
+    md5: 'e53eb37c4dc3dce1c8ee0c996ca3a024',
+  },
+  {
+    url: 'https://cdn.gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar',
+    md5: 'e53eb37c4dc3dce1c8ee0c996ca3a024',
+  },
+  {
+    url: 'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar',
+    md5: 'e53eb37c4dc3dce1c8ee0c996ca3a024',
+  },
+  {
+    url: 'https://gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar',
+    md5: 'e53eb37c4dc3dce1c8ee0c996ca3a024',
   },
   {
     url: 'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar',

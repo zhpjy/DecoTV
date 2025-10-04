@@ -9,9 +9,13 @@ import crypto from 'crypto';
 // Remote jar candidates (order by stability and SSL compatibility)
 // 优先使用支持 HTTPS 且稳定的源，减少 SSL handshake 错误
 const CANDIDATES: string[] = [
-  // 优先：国内稳定源（避免 SSL 问题）
-  'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar',
-  'https://gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar',
+  // 优先：国内云存储/CDN镜像（阿里云OSS、腾讯云COS、国内CDN）
+  'https://deco-spider.oss-cn-hangzhou.aliyuncs.com/XC.jar', // 阿里云 OSS
+  'https://deco-spider-1250000000.cos.ap-shanghai.myqcloud.com/XC.jar', // 腾讯云 COS
+  'https://cdn.gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar', // gitcode CDN 镜像
+  'https://cdn.gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar', // gitee CDN 镜像
+  'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar', // gitcode 原始
+  'https://gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar', // gitee 原始
 
   // jsDelivr CDN（全球加速，SSL 稳定）
   'https://cdn.jsdelivr.net/gh/hjdhnx/dr_py@main/js/drpy.jar',
