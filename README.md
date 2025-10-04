@@ -278,7 +278,7 @@ NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE 选项解释：
 - cmliussss-cdn-ali：由浏览器请求豆瓣 CDN，该 CDN 由 [CMLiussss](https://github.com/cmliu) 搭建，并由阿里云 cdn 提供加速
 - custom: 用户自定义 proxy，由 NEXT_PUBLIC_DOUBAN_IMAGE_PROXY 定义
 
-## � Roadmap
+##  Roadmap
 
 - [ ] 多语言国际化支持
 - [ ] 更多数据库存储选择
@@ -288,11 +288,15 @@ NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE 选项解释：
 - [ ] 弹幕功能
 - [ ] 离线下载功能
 
-## �📺 AndroidTV 使用
+## 📺 AndroidTV 使用
 
 目前该项目可以配合 [OrionTV](https://github.com/zimplexing/OrionTV) 在 Android TV 上使用，可以直接作为 OrionTV 后端
 
 已实现播放记录和网页端同步
+
+## 🎥 TVbox配置
+
+具体可见 [TVBox配置优化说明](https://github.com/Decohererk/DecoTV/blob/main/TVBox%E9%85%8D%E7%BD%AE%E4%BC%98%E5%8C%96%E8%AF%B4%E6%98%8E.md) ,详细功能见/admin 管理页面 **TVbox配置**
 
 ## 🔒 安全与隐私提醒
 
