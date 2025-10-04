@@ -4,6 +4,134 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 
+// ================= Spider 公共可达 & 回退缓存逻辑 =================
+// 目的：避免出现 “spider url is private/not public” & 404 问题
+// 策略：
+// 1. 永远优先返回【公网可直接访问】的远程 jar 地址（不用 localhost / 内网 IP）
+// 2. 多源顺序探测（HEAD/快速 GET），成功后缓存 30 分钟，减少频繁探测
+// 3. 探测失败时，仍然返回第一个候选（保证字段存在），并附加 ;fail 方便诊断
+// 4. 可通过 ?forceSpiderRefresh=1 强制刷新缓存
+// 5. 若用户仍需要本地代理，在 admin 面板单独展示“备用代理地址”而不是写入 spider 主字段
+
+// 远程候选列表（按稳定性 & 全球可达性排序）
+const REMOTE_SPIDER_CANDIDATES: { url: string; md5?: string }[] = [
+  {
+    url: 'https://cdn.jsdelivr.net/gh/FongMi/CatVodSpider@main/jar/custom_spider.jar',
+    md5: 'a8b9c1d2e3f4',
+  },
+  {
+    url: 'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
+    md5: 'a8b9c1d2e3f4',
+  },
+  {
+    url: 'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar',
+    md5: 'e53eb37c4dc3dce1c8ee0c996ca3a024',
+  },
+  {
+    url: 'https://ghproxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
+    md5: 'a8b9c1d2e3f4',
+  },
+];
+
+// 内网 / 私网 host 判定（TVBox 体检会标记为 private/not public 的几类）
+function isPrivateHost(host: string): boolean {
+  if (!host) return true;
+  const lower = host.toLowerCase();
+  return (
+    lower.startsWith('localhost') ||
+    lower.startsWith('127.') ||
+    lower.startsWith('0.0.0.0') ||
+    lower.startsWith('10.') ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(lower) ||
+    lower.startsWith('192.168.') ||
+    lower === '::1'
+  );
+}
+
+type SpiderCacheEntry = { url: string; ts: number } | null;
+let spiderCache: SpiderCacheEntry = null;
+const SPIDER_CACHE_TTL_MS = 30 * 60 * 1000; // 30分钟
+
+// 最近一次 spider 选择过程状态（用于调试/体检透出）
+let lastSpiderStatus: {
+  fromCache: boolean;
+  success: boolean;
+  selected: string;
+  tried: number;
+  forceRefresh: boolean;
+  timestamp: number;
+} | null = null;
+
+async function probeSpiderUrl(url: string, timeoutMs = 4000): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    // 使用 HEAD，若部分源不支持 HEAD，回退 GET（容错）
+    let resp = await fetch(url, { method: 'HEAD', signal: controller.signal });
+    if (!resp.ok || !resp.headers.get('content-length')) {
+      // 回退 GET（只取前若干字节即可——但 fetch 没有 range 就直接放行，体积不大）
+      resp = await fetch(url, { method: 'GET', signal: controller.signal });
+    }
+    clearTimeout(id);
+    return resp.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function selectPublicSpider(forceRefresh = false): Promise<string> {
+  const now = Date.now();
+  // 缓存命中
+  if (
+    !forceRefresh &&
+    spiderCache &&
+    now - spiderCache.ts < SPIDER_CACHE_TTL_MS
+  ) {
+    lastSpiderStatus = {
+      fromCache: true,
+      success: !/;fail$/.test(spiderCache.url),
+      selected: spiderCache.url,
+      tried: 0,
+      forceRefresh,
+      timestamp: now,
+    };
+    return spiderCache.url;
+  }
+  let tried = 0;
+  for (const cand of REMOTE_SPIDER_CANDIDATES) {
+    tried += 1;
+    const ok = await probeSpiderUrl(cand.url);
+    if (ok) {
+      const full = cand.md5 ? `${cand.url};md5;${cand.md5}` : cand.url;
+      spiderCache = { url: full, ts: now };
+      lastSpiderStatus = {
+        fromCache: false,
+        success: true,
+        selected: full,
+        tried,
+        forceRefresh,
+        timestamp: now,
+      };
+      return full;
+    }
+  }
+  // 全部失败：仍返回第一个候选并带 fail 标记（体检仍能看到是公网 URL，不再是 private）
+  const first = REMOTE_SPIDER_CANDIDATES[0];
+  const fallback = first.md5
+    ? `${first.url};md5;${first.md5};fail`
+    : `${first.url};fail`;
+  spiderCache = { url: fallback, ts: now };
+  lastSpiderStatus = {
+    fromCache: false,
+    success: false,
+    selected: fallback,
+    tried,
+    forceRefresh,
+    timestamp: now,
+  };
+  return fallback;
+}
+
 export const runtime = 'nodejs';
 
 // TVBox 订阅格式 - 标准 TVBox/猫影视 格式
@@ -60,20 +188,9 @@ export async function GET(req: NextRequest) {
 
     const cfg = await getConfig();
 
-    // 🔧 彻底解决spider jar 404问题 - 使用多个备用地址
-    const reliableSpiderJars = [
-      // 官方GitHub直链 - 最稳定
-      'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
-      // GitHub Proxy镜像 - 国内可达
-      'https://ghproxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
-      // JSDelivr CDN - 全球可达
-      'https://cdn.jsdelivr.net/gh/FongMi/CatVodSpider@main/jar/custom_spider.jar',
-      // 备用源
-      'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar',
-    ];
-
-    // 默认使用JSDelivr CDN（全球可达性最好）
-    let globalSpiderJar = reliableSpiderJars[2] + ';md5;a8b9c1d2e3f4';
+    const forceSpiderRefresh = searchParams.get('forceSpiderRefresh') === '1';
+    // 选择一个“公网可访问”的 spider（含缓存 + 回退）
+    let globalSpiderJar = await selectPublicSpider(forceSpiderRefresh);
 
     const sites = (cfg.SourceConfig || [])
       .filter((s) => !s.disabled)
@@ -202,8 +319,8 @@ export async function GET(req: NextRequest) {
     if (mode === 'yingshicang') {
       // 专门为影视仓优化的配置 - 解决数据获取问题
       tvboxConfig = {
-        // 影视仓专用：使用本地代理确保100%可达
-        spider: `${req.nextUrl.origin}/api/proxy/spider.jar;md5;proxy`,
+        // 使用公共 spider（不要使用 localhost 避免体检判定 private）
+        spider: globalSpiderJar,
         sites: sites.map((site) => {
           const optimizedSite = { ...site };
 
@@ -434,17 +551,29 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    // 🎯 终极解决方案：使用本地代理jar，100%解决404问题
-    let validSpiderJar = tvboxConfig.spider;
+    // 若用户传入了 ?spider=<url> 覆盖，则在保证公共可达（非私网）时允许替换
+    const overrideSpider = searchParams.get('spider');
+    if (
+      overrideSpider &&
+      /^https?:\/\//i.test(overrideSpider) &&
+      !isPrivateHost(new URL(overrideSpider).hostname)
+    ) {
+      tvboxConfig.spider = overrideSpider;
+    } else {
+      tvboxConfig.spider = globalSpiderJar;
+    }
 
-    // 使用本地代理避免外部jar文件404错误
-    const localProxyJar = `${req.nextUrl.origin}/api/proxy/spider.jar;md5;proxy`;
-
-    // 设置为本地代理地址
-    validSpiderJar = localProxyJar;
-
-    // 更新配置中的spider
-    tvboxConfig.spider = validSpiderJar;
+    // 提供备用字段：备用可选本地代理（不放入主 spider，避免体检私网判定）
+    (
+      tvboxConfig as any
+    ).spider_backup = `${req.nextUrl.origin}/api/proxy/spider.jar`;
+    // 透明化 spider 选择状态，帮助诊断（不会影响 TVBox 使用）
+    if (lastSpiderStatus) {
+      (tvboxConfig as any).spider_status = lastSpiderStatus;
+      (tvboxConfig as any).spider_candidates = REMOTE_SPIDER_CANDIDATES.map(
+        (c) => c.url
+      );
+    }
 
     // 配置验证和清理
     console.log('TVBox配置验证:', {
