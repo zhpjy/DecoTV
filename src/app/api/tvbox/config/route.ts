@@ -110,10 +110,18 @@ export async function GET(req: NextRequest) {
     const cfg = await getConfig();
 
     const forceSpiderRefresh = searchParams.get('forceSpiderRefresh') === '1';
-    // 新策略：总是使用本地代理路径，确保 100% 不会 404
+    // 最终策略：优先使用远程公网 jar，失败时使用稳定的公网备用
     const jarInfo = await getSpiderJar(forceSpiderRefresh);
-    // 无论远程是否成功，都使用本地代理路径（内部会智能选择最佳 jar）
-    let globalSpiderJar = `${req.nextUrl.origin}/api/proxy/spider.jar;md5;${jarInfo.md5}`;
+    let globalSpiderJar: string;
+
+    if (jarInfo.success && jarInfo.source !== 'fallback') {
+      // 成功获取远程 jar，直接使用远程 URL（公网地址）
+      globalSpiderJar = `${jarInfo.source};md5;${jarInfo.md5}`;
+    } else {
+      // 远程失败，使用已知稳定的公网 jar（不会 private/404）
+      globalSpiderJar =
+        'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar;md5;e53eb37c4dc3dce1c8ee0c996ca3a024';
+    }
 
     const sites = (cfg.SourceConfig || [])
       .filter((s) => !s.disabled)
@@ -493,10 +501,9 @@ export async function GET(req: NextRequest) {
     tvboxConfig.spider_tried = jarInfo.tried;
     tvboxConfig.spider_success = jarInfo.success;
 
-    // 提供备用字段：备用可选本地代理（不放入主 spider，避免体检私网判定）
-    (
-      tvboxConfig as any
-    ).spider_backup = `${req.nextUrl.origin}/api/proxy/spider.jar`;
+    // 提供备用字段：仅用于调试，不影响体检
+    (tvboxConfig as any).spider_backup =
+      'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar';
     // 保留候选列表以便前端展示（可选）
     (tvboxConfig as any).spider_candidates = REMOTE_SPIDER_CANDIDATES.map(
       (c) => c.url

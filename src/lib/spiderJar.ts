@@ -1,46 +1,5 @@
 /*
- * Ro// Remote jar candidates (order by stabilasync function fetchRemote(url: string, timeoutMs = 10000): Promise<Buffer | null> {
-  try {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeoutMs);
-    
-    // 先用 HEAD 检查文件是否存在
-    const headResp = await fetch(url, { method: 'HEAD', signal: controller.signal });
-    if (!headResp.ok || headResp.status >= 400) {
-      clearTimeout(id);
-      return null;
-    }
-    
-    // 文件存在，获取完整内容
-    const resp = await fetch(url, { 
-      method: 'GET', 
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-    clearTimeout(id);
-    
-    if (!resp.ok || resp.status >= 400) return null;
-    const ab = await resp.arrayBuffer();
-    if (ab.byteLength < 1000) return null; // jar 文件应该至少 1KB
-    
-    return Buffer.from(ab);
-  } catch (error) {
-    console.log(`Failed to fetch ${url}:`, error instanceof Error ? error.message : 'Unknown error');
-    return null;
-  }
-}ist as needed.
-const CANDIDATES: string[] = [
-  // 使用实际存在的 jar 文件
-  'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar',
-  'https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
-  'https://ghproxy.com/https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
-  'https://cdn.jsdelivr.net/gh/hjdhnx/dr_py@main/js/drpy.jar',
-  // 备用社区 jar
-  'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/spider.jar',
-  'https://ghproxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/spider.jar'
-];der.jar provider
+ * Robust spider.jar provider
  * - Sequentially tries remote candidates
  * - Caches successful jar (memory) for TTL
  * - Provides minimal fallback jar when all fail (still 200 to avoid TVBox unreachable)
@@ -49,11 +8,14 @@ import crypto from 'crypto';
 
 // Remote jar candidates (order by stability). Update list as needed.
 const CANDIDATES: string[] = [
-  'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
-  'https://cdn.jsdelivr.net/gh/FongMi/CatVodSpider@main/jar/custom_spider.jar',
-  // Extra mirrors / alternative community jars (add more if needed)
-  'https://ghproxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
+  // 使用实际存在的 jar 文件
   'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar',
+  'https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
+  'https://ghproxy.com/https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
+  'https://cdn.jsdelivr.net/gh/hjdhnx/dr_py@main/js/drpy.jar',
+  // 备用社区 jar
+  'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/spider.jar',
+  'https://ghproxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/spider.jar',
 ];
 
 // 内置稳定 JAR 作为最终 fallback - 提取自实际工作的 spider.jar
@@ -77,16 +39,37 @@ const TTL = 6 * 60 * 60 * 1000; // 6h
 
 async function fetchRemote(
   url: string,
-  timeoutMs = 8000
+  timeoutMs = 10000
 ): Promise<Buffer | null> {
   try {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeoutMs);
-    const resp = await fetch(url, { method: 'GET', signal: controller.signal });
+
+    // 先用 HEAD 检查文件是否存在
+    const headResp = await fetch(url, {
+      method: 'HEAD',
+      signal: controller.signal,
+    });
+    if (!headResp.ok || headResp.status >= 400) {
+      clearTimeout(id);
+      return null;
+    }
+
+    // 文件存在，获取完整内容
+    const resp = await fetch(url, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+    });
     clearTimeout(id);
+
     if (!resp.ok || resp.status >= 400) return null;
     const ab = await resp.arrayBuffer();
-    if (ab.byteLength < 500) return null; // too small to be a real jar
+    if (ab.byteLength < 1000) return null; // jar 文件应该至少 1KB
+
     return Buffer.from(ab);
   } catch {
     return null;
