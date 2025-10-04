@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { getSpiderJar } from '@/lib/spiderJar';
 
 // ================= Spider 公共可达 & 回退缓存逻辑 =================
 // 目的：避免出现 “spider url is private/not public” & 404 问题
@@ -48,89 +49,9 @@ function isPrivateHost(host: string): boolean {
   );
 }
 
-type SpiderCacheEntry = { url: string; ts: number } | null;
-let spiderCache: SpiderCacheEntry = null;
-const SPIDER_CACHE_TTL_MS = 30 * 60 * 1000; // 30分钟
+// 旧 spider 探测与缓存逻辑已被 getSpiderJar 取代（保留候选常量供文档或 UI 展示）
 
-// 最近一次 spider 选择过程状态（用于调试/体检透出）
-let lastSpiderStatus: {
-  fromCache: boolean;
-  success: boolean;
-  selected: string;
-  tried: number;
-  forceRefresh: boolean;
-  timestamp: number;
-} | null = null;
-
-async function probeSpiderUrl(url: string, timeoutMs = 4000): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeoutMs);
-    // 使用 HEAD，若部分源不支持 HEAD，回退 GET（容错）
-    let resp = await fetch(url, { method: 'HEAD', signal: controller.signal });
-    if (!resp.ok || !resp.headers.get('content-length')) {
-      // 回退 GET（只取前若干字节即可——但 fetch 没有 range 就直接放行，体积不大）
-      resp = await fetch(url, { method: 'GET', signal: controller.signal });
-    }
-    clearTimeout(id);
-    return resp.ok;
-  } catch {
-    return false;
-  }
-}
-
-async function selectPublicSpider(forceRefresh = false): Promise<string> {
-  const now = Date.now();
-  // 缓存命中
-  if (
-    !forceRefresh &&
-    spiderCache &&
-    now - spiderCache.ts < SPIDER_CACHE_TTL_MS
-  ) {
-    lastSpiderStatus = {
-      fromCache: true,
-      success: !/;fail$/.test(spiderCache.url),
-      selected: spiderCache.url,
-      tried: 0,
-      forceRefresh,
-      timestamp: now,
-    };
-    return spiderCache.url;
-  }
-  let tried = 0;
-  for (const cand of REMOTE_SPIDER_CANDIDATES) {
-    tried += 1;
-    const ok = await probeSpiderUrl(cand.url);
-    if (ok) {
-      const full = cand.md5 ? `${cand.url};md5;${cand.md5}` : cand.url;
-      spiderCache = { url: full, ts: now };
-      lastSpiderStatus = {
-        fromCache: false,
-        success: true,
-        selected: full,
-        tried,
-        forceRefresh,
-        timestamp: now,
-      };
-      return full;
-    }
-  }
-  // 全部失败：仍返回第一个候选并带 fail 标记（体检仍能看到是公网 URL，不再是 private）
-  const first = REMOTE_SPIDER_CANDIDATES[0];
-  const fallback = first.md5
-    ? `${first.url};md5;${first.md5};fail`
-    : `${first.url};fail`;
-  spiderCache = { url: fallback, ts: now };
-  lastSpiderStatus = {
-    fromCache: false,
-    success: false,
-    selected: fallback,
-    tried,
-    forceRefresh,
-    timestamp: now,
-  };
-  return fallback;
-}
+// 旧的 selectPublicSpider 已被新的 getSpiderJar 方案取代，保留状态结构供兼容（不再调用）
 
 export const runtime = 'nodejs';
 
@@ -189,8 +110,11 @@ export async function GET(req: NextRequest) {
     const cfg = await getConfig();
 
     const forceSpiderRefresh = searchParams.get('forceSpiderRefresh') === '1';
-    // 选择一个“公网可访问”的 spider（含缓存 + 回退）
-    let globalSpiderJar = await selectPublicSpider(forceSpiderRefresh);
+    // 新：真实拉取远程 jar（或 fallback），生成稳定 spider 字段，避免 404 / unreachable
+    const jarInfo = await getSpiderJar(forceSpiderRefresh);
+    let globalSpiderJar = jarInfo.success
+      ? `${jarInfo.source};md5;${jarInfo.md5}`
+      : `${req.nextUrl.origin}/api/proxy/spider.jar;md5;${jarInfo.md5}`;
 
     const sites = (cfg.SourceConfig || [])
       .filter((s) => !s.disabled)
@@ -562,18 +486,22 @@ export async function GET(req: NextRequest) {
     } else {
       tvboxConfig.spider = globalSpiderJar;
     }
+    // 附加可观测字段（TVBox 忽略未知字段，不影响使用）
+    tvboxConfig.spider_url = jarInfo.source;
+    tvboxConfig.spider_md5 = jarInfo.md5;
+    tvboxConfig.spider_cached = jarInfo.cached;
+    tvboxConfig.spider_real_size = jarInfo.size;
+    tvboxConfig.spider_tried = jarInfo.tried;
+    tvboxConfig.spider_success = jarInfo.success;
 
     // 提供备用字段：备用可选本地代理（不放入主 spider，避免体检私网判定）
     (
       tvboxConfig as any
     ).spider_backup = `${req.nextUrl.origin}/api/proxy/spider.jar`;
-    // 透明化 spider 选择状态，帮助诊断（不会影响 TVBox 使用）
-    if (lastSpiderStatus) {
-      (tvboxConfig as any).spider_status = lastSpiderStatus;
-      (tvboxConfig as any).spider_candidates = REMOTE_SPIDER_CANDIDATES.map(
-        (c) => c.url
-      );
-    }
+    // 保留候选列表以便前端展示（可选）
+    (tvboxConfig as any).spider_candidates = REMOTE_SPIDER_CANDIDATES.map(
+      (c) => c.url
+    );
 
     // 配置验证和清理
     console.log('TVBox配置验证:', {
