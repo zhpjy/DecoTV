@@ -110,11 +110,10 @@ export async function GET(req: NextRequest) {
     const cfg = await getConfig();
 
     const forceSpiderRefresh = searchParams.get('forceSpiderRefresh') === '1';
-    // 新：真实拉取远程 jar（或 fallback），生成稳定 spider 字段，避免 404 / unreachable
+    // 新策略：总是使用本地代理路径，确保 100% 不会 404
     const jarInfo = await getSpiderJar(forceSpiderRefresh);
-    let globalSpiderJar = jarInfo.success
-      ? `${jarInfo.source};md5;${jarInfo.md5}`
-      : `${req.nextUrl.origin}/api/proxy/spider.jar;md5;${jarInfo.md5}`;
+    // 无论远程是否成功，都使用本地代理路径（内部会智能选择最佳 jar）
+    let globalSpiderJar = `${req.nextUrl.origin}/api/proxy/spider.jar;md5;${jarInfo.md5}`;
 
     const sites = (cfg.SourceConfig || [])
       .filter((s) => !s.disabled)
