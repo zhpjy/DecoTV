@@ -3,7 +3,9 @@
  * 版本号格式: YYYYMMDDHHMMSS (年月日时分秒)
  */
 
-const CURRENT_VERSION = '0.2.0';
+// 版本常量
+const CURRENT_SEMANTIC_VERSION = '0.2.0';
+export const CURRENT_VERSION = CURRENT_SEMANTIC_VERSION;
 
 export interface VersionInfo {
   version: string; // package.json 版本 (如 "0.2.0")
@@ -96,6 +98,9 @@ export function generateVersionTimestamp(): string {
 /**
  * 获取当前版本信息
  */
+/**
+ * 获取当前版本信息（基于时间戳）
+ */
 export async function getCurrentVersionInfo(): Promise<VersionInfo> {
   try {
     // 从 VERSION.txt 获取时间戳版本
@@ -108,13 +113,13 @@ export async function getCurrentVersionInfo(): Promise<VersionInfo> {
       version: CURRENT_VERSION,
       timestamp,
       buildTime,
-      isLatest: true, // 默认当前版本是最新的，需要与远程比较
-      updateAvailable: false,
+      isLatest: true, // 将在 checkForUpdates 中更新
+      updateAvailable: false, // 将在 checkForUpdates 中更新
       displayVersion: `v${CURRENT_VERSION}`,
     };
   } catch (error) {
-    // 降级处理
-    const timestamp = '20251005140531'; // 默认时间戳
+    // 降级处理：使用 VERSION.txt 的默认值
+    const timestamp = '20251005140531';
     return {
       version: CURRENT_VERSION,
       timestamp,
@@ -127,37 +132,84 @@ export async function getCurrentVersionInfo(): Promise<VersionInfo> {
 }
 
 /**
- * 检查是否有新版本可用
- * 这里可以连接到 GitHub API 或其他版本检查服务
+ * 从远程获取版本时间戳
+ */
+async function fetchRemoteVersion(): Promise<string | null> {
+  try {
+    const repoUrl =
+      'https://raw.githubusercontent.com/Decohererk/DecoTV/main/VERSION.txt';
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+
+    const response = await fetch(repoUrl, {
+      signal: controller.signal,
+      cache: 'no-cache',
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const timestamp = (await response.text()).trim();
+
+    // 验证时间戳格式
+    if (!/^\d{14}$/.test(timestamp)) {
+      return null;
+    }
+
+    return timestamp;
+  } catch (error) {
+    // 网络错误或超时，静默处理
+    return null;
+  }
+}
+
+/**
+ * 检查是否有新版本可用（基于时间戳比较）
  */
 export async function checkForUpdates(currentTimestamp: string): Promise<{
   hasUpdate: boolean;
   remoteVersion?: RemoteVersionInfo;
 }> {
   try {
-    // 这里可以连接到 GitHub Releases API 或自定义的版本检查服务
-    // 目前使用模拟数据，实际使用时可以连接真实API
-    const mockRemoteVersion: RemoteVersionInfo = {
-      version: '0.2.1',
-      timestamp: '20251010120000', // 假设的未来版本
-      releaseNotes: [
-        '修复 JAR 加载错误问题',
-        '优化版本检测机制',
-        '提升 TVBox 配置稳定性',
-      ],
-      downloadUrl: 'https://github.com/Decohererk/DecoTV/releases/latest',
-    };
+    // 获取远程 VERSION.txt 文件的时间戳
+    const remoteTimestamp = await fetchRemoteVersion();
 
-    const comparison = compareVersions(
-      currentTimestamp,
-      mockRemoteVersion.timestamp
-    );
+    if (!remoteTimestamp) {
+      return {
+        hasUpdate: false,
+      };
+    }
+
+    // 比较时间戳：只有远程时间戳大于当前时间戳才认为有更新
+    const comparison = compareVersions(currentTimestamp, remoteTimestamp);
+    const hasUpdate = comparison < 0;
+
+    if (hasUpdate) {
+      const remoteVersion: RemoteVersionInfo = {
+        version: `v${CURRENT_VERSION}+${remoteTimestamp.slice(-6)}`, // 显示后6位作为版本标识
+        timestamp: remoteTimestamp,
+        releaseNotes: [
+          '发现新版本可用',
+          `构建时间: ${formatVersionTimestamp(remoteTimestamp)}`,
+          '点击前往仓库查看更新详情',
+        ],
+        downloadUrl: 'https://github.com/Decohererk/DecoTV/releases',
+      };
+
+      return {
+        hasUpdate: true,
+        remoteVersion,
+      };
+    }
 
     return {
-      hasUpdate: comparison < 0,
-      remoteVersion: comparison < 0 ? mockRemoteVersion : undefined,
+      hasUpdate: false,
     };
   } catch (error) {
+    // 静默处理错误
     return {
       hasUpdate: false,
     };
@@ -187,5 +239,4 @@ export function getVersionStatusInfo(versionInfo: VersionInfo) {
   };
 }
 
-// 导出当前版本号供其他地方使用
-export { CURRENT_VERSION };
+// CURRENT_VERSION 已在文件顶部导出

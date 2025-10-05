@@ -2,7 +2,7 @@
 
 'use client';
 
-import { CURRENT_VERSION } from '@/lib/version';
+// 版本检查工具 - 基于时间戳比较
 
 // 版本检查结果枚举
 export enum UpdateStatus {
@@ -21,20 +21,47 @@ const VERSION_CHECK_URLS = UPDATE_REPO
  * 检查是否有新版本可用
  * @returns Promise<UpdateStatus> - 返回版本检查状态
  */
-export async function checkForUpdates(): Promise<UpdateStatus> {
+export async function checkForUpdates(): Promise<{
+  status: UpdateStatus;
+  currentTimestamp?: string;
+  remoteTimestamp?: string;
+}> {
   try {
     if (VERSION_CHECK_URLS.length === 0) {
-      return UpdateStatus.FETCH_FAILED;
+      return { status: UpdateStatus.FETCH_FAILED };
     }
 
-    // 尝试从主要URL获取版本信息
-    const primaryVersion = await fetchVersionFromUrl(VERSION_CHECK_URLS[0]);
-    return primaryVersion
-      ? compareVersions(primaryVersion)
-      : UpdateStatus.FETCH_FAILED;
+    // 获取当前时间戳
+    let currentTimestamp: string;
+    try {
+      const response = await fetch('/VERSION.txt');
+      currentTimestamp = (await response.text()).trim();
+    } catch {
+      currentTimestamp = '20251005140531'; // 默认值
+    }
+
+    // 获取远程时间戳
+    const remoteTimestamp = await fetchVersionFromUrl(VERSION_CHECK_URLS[0]);
+
+    if (!remoteTimestamp) {
+      return {
+        status: UpdateStatus.FETCH_FAILED,
+        currentTimestamp,
+      };
+    }
+
+    const status = compareVersionsByTimestamp(
+      remoteTimestamp,
+      currentTimestamp
+    );
+
+    return {
+      status,
+      currentTimestamp,
+      remoteTimestamp,
+    };
   } catch (error) {
-    console.error('版本检查失败:', error);
-    return UpdateStatus.FETCH_FAILED;
+    return { status: UpdateStatus.FETCH_FAILED };
   }
 }
 
@@ -77,68 +104,40 @@ async function fetchVersionFromUrl(url: string): Promise<string | null> {
 }
 
 /**
- * 比较版本号
- * @param remoteVersion - 远程版本号
+ * 比较时间戳版本号
+ * @param remoteTimestamp - 远程时间戳版本
+ * @param currentTimestamp - 当前时间戳版本
  * @returns UpdateStatus - 返回版本比较结果
  */
-export function compareVersions(remoteVersion: string): UpdateStatus {
-  // 如果版本号相同，无需更新
-  if (remoteVersion === CURRENT_VERSION) {
+export function compareVersionsByTimestamp(
+  remoteTimestamp: string,
+  currentTimestamp: string
+): UpdateStatus {
+  // 如果时间戳相同，无需更新
+  if (remoteTimestamp === currentTimestamp) {
     return UpdateStatus.NO_UPDATE;
   }
 
   try {
-    // 解析版本号为数字数组 [X, Y, Z]
-    const currentParts = CURRENT_VERSION.split('.').map((part) => {
-      const num = parseInt(part, 10);
-      if (isNaN(num) || num < 0) {
-        throw new Error(`无效的版本号格式: ${CURRENT_VERSION}`);
-      }
-      return num;
-    });
-
-    const remoteParts = remoteVersion.split('.').map((part) => {
-      const num = parseInt(part, 10);
-      if (isNaN(num) || num < 0) {
-        throw new Error(`无效的版本号格式: ${remoteVersion}`);
-      }
-      return num;
-    });
-
-    // 标准化版本号到3个部分
-    const normalizeVersion = (parts: number[]) => {
-      if (parts.length >= 3) {
-        return parts.slice(0, 3); // 取前三个元素
-      } else {
-        // 不足3个的部分补0
-        const normalized = [...parts];
-        while (normalized.length < 3) {
-          normalized.push(0);
-        }
-        return normalized;
-      }
-    };
-
-    const normalizedCurrent = normalizeVersion(currentParts);
-    const normalizedRemote = normalizeVersion(remoteParts);
-
-    // 逐级比较版本号
-    for (let i = 0; i < 3; i++) {
-      if (normalizedRemote[i] > normalizedCurrent[i]) {
-        return UpdateStatus.HAS_UPDATE;
-      } else if (normalizedRemote[i] < normalizedCurrent[i]) {
-        return UpdateStatus.NO_UPDATE;
-      }
-      // 如果当前级别相等，继续比较下一级
+    // 验证时间戳格式
+    if (
+      !/^\d{14}$/.test(remoteTimestamp) ||
+      !/^\d{14}$/.test(currentTimestamp)
+    ) {
+      throw new Error('无效的时间戳格式');
     }
 
-    // 所有级别都相等，无需更新
-    return UpdateStatus.NO_UPDATE;
+    // 直接比较时间戳数值：远程时间戳大于当前时间戳则有更新
+    const remoteNum = parseInt(remoteTimestamp, 10);
+    const currentNum = parseInt(currentTimestamp, 10);
+
+    if (remoteNum > currentNum) {
+      return UpdateStatus.HAS_UPDATE;
+    } else {
+      return UpdateStatus.NO_UPDATE;
+    }
   } catch (error) {
-    console.error('版本号比较失败:', error);
-    // 如果版本号格式无效，回退到字符串比较
-    return remoteVersion !== CURRENT_VERSION
-      ? UpdateStatus.HAS_UPDATE
-      : UpdateStatus.NO_UPDATE;
+    // 如果时间戳格式无效，认为没有更新
+    return UpdateStatus.NO_UPDATE;
   }
 }

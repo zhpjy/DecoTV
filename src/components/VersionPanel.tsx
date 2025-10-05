@@ -17,7 +17,7 @@ import { createPortal } from 'react-dom';
 
 import { changelog, ChangelogEntry } from '@/lib/changelog';
 import { CURRENT_VERSION } from '@/lib/version';
-import { compareVersions, UpdateStatus } from '@/lib/version_check';
+// 版本面板组件
 
 interface VersionPanelProps {
   isOpen: boolean;
@@ -97,9 +97,8 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
         if (parsed.length > 0) {
           const latest = parsed[0];
           setLatestVersion(latest.version);
-          setIsHasUpdate(
-            compareVersions(latest.version) === UpdateStatus.HAS_UPDATE
-          );
+          // 暂时禁用这个检查，使用新的时间戳比较逻辑
+          setIsHasUpdate(false);
         }
       } else {
         console.error(
