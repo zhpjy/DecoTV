@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { getSpiderJar, getSpiderStatus } from '@/lib/spiderJar';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; // 强制动态渲染，避免构建时获取JAR超时
 
 /**
  * Spider JAR 状态检查 API

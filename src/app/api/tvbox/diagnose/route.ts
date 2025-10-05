@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; // 强制动态渲染，需要运行时请求头信息
 
 function getBaseUrl(req: NextRequest): string {
   const envBase = (process.env.NEXT_PUBLIC_SITE_BASE || '')
