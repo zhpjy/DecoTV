@@ -2,7 +2,7 @@
 
 'use client';
 
-import { CURRENT_VERSION } from "@/lib/version";
+import { CURRENT_VERSION } from '@/lib/version';
 
 // 版本检查结果枚举
 export enum UpdateStatus {
@@ -12,7 +12,7 @@ export enum UpdateStatus {
 }
 
 // 远程版本检查URL配置（可通过 NEXT_PUBLIC_UPDATE_REPO 指定形如 "owner/repo"）
-const UPDATE_REPO = process.env.NEXT_PUBLIC_UPDATE_REPO;
+const UPDATE_REPO = process.env.NEXT_PUBLIC_UPDATE_REPO || 'Decohererk/DecoTV';
 const VERSION_CHECK_URLS = UPDATE_REPO
   ? [`https://raw.githubusercontent.com/${UPDATE_REPO}/main/VERSION.txt`]
   : [];
@@ -29,7 +29,9 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
 
     // 尝试从主要URL获取版本信息
     const primaryVersion = await fetchVersionFromUrl(VERSION_CHECK_URLS[0]);
-    return primaryVersion ? compareVersions(primaryVersion) : UpdateStatus.FETCH_FAILED;
+    return primaryVersion
+      ? compareVersions(primaryVersion)
+      : UpdateStatus.FETCH_FAILED;
   } catch (error) {
     console.error('版本检查失败:', error);
     return UpdateStatus.FETCH_FAILED;

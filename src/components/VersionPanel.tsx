@@ -41,8 +41,10 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
   const [hasUpdate, setIsHasUpdate] = useState(false);
   const [latestVersion, setLatestVersion] = useState<string>('');
   const [showRemoteContent, setShowRemoteContent] = useState(false);
-  const UPDATE_REPO = process.env.NEXT_PUBLIC_UPDATE_REPO;
-  const REPO_URL = process.env.NEXT_PUBLIC_REPO_URL || (UPDATE_REPO ? `https://github.com/${UPDATE_REPO}` : '');
+  const UPDATE_REPO =
+    process.env.NEXT_PUBLIC_UPDATE_REPO || 'Decohererk/DecoTV';
+  const REPO_URL =
+    process.env.NEXT_PUBLIC_REPO_URL || `https://github.com/${UPDATE_REPO}`;
 
   // 确保组件已挂载
   useEffect(() => {
@@ -190,12 +192,13 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
     return (
       <div
         key={entry.version}
-        className={`p-4 rounded-lg border ${isCurrentVersion
-          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-          : isUpdate
+        className={`p-4 rounded-lg border ${
+          isCurrentVersion
+            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+            : isUpdate
             ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
             : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700'
-          }`}
+        }`}
       >
         {/* 版本标题 */}
         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3'>
@@ -447,10 +450,11 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                       .map((entry, index) => (
                         <div
                           key={index}
-                          className={`p-4 rounded-lg border ${entry.version === latestVersion
-                            ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-                            : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700'
-                            }`}
+                          className={`p-4 rounded-lg border ${
+                            entry.version === latestVersion
+                              ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                              : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700'
+                          }`}
                         >
                           <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3'>
                             <div className='flex flex-wrap items-center gap-2'>
