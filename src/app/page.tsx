@@ -388,7 +388,12 @@ function HomeClient() {
                             (item) => item.weekday.en === currentWeekday
                           )?.items || [];
 
-                        return todayAnimes.map((anime, index) => (
+                        // 过滤掉无效数据
+                        const validAnimes = todayAnimes.filter(
+                          (anime) => anime && anime.id
+                        );
+
+                        return validAnimes.map((anime, index) => (
                           <div
                             key={`${anime.id}-${index}`}
                             className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
@@ -397,11 +402,12 @@ function HomeClient() {
                               from='douban'
                               title={anime.name_cn || anime.name}
                               poster={
-                                anime.images.large ||
-                                anime.images.common ||
-                                anime.images.medium ||
-                                anime.images.small ||
-                                anime.images.grid
+                                anime.images?.large ||
+                                anime.images?.common ||
+                                anime.images?.medium ||
+                                anime.images?.small ||
+                                anime.images?.grid ||
+                                '/logo.png'
                               }
                               douban_id={anime.id}
                               rate={anime.rating?.score?.toFixed(1) || ''}

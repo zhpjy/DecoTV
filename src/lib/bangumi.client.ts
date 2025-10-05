@@ -8,22 +8,30 @@ export interface BangumiCalendarData {
     id: number;
     name: string;
     name_cn: string;
-    rating: {
-      score: number;
+    rating?: {
+      score?: number;
     };
-    air_date: string;
-    images: {
-      large: string;
-      common: string;
-      medium: string;
-      small: string;
-      grid: string;
+    air_date?: string;
+    images?: {
+      large?: string;
+      common?: string;
+      medium?: string;
+      small?: string;
+      grid?: string;
     };
   }[];
 }
 
 export async function GetBangumiCalendarData(): Promise<BangumiCalendarData[]> {
-  const response = await fetch('https://api.bgm.tv/calendar');
-  const data = await response.json();
-  return data;
+  try {
+    const response = await fetch('https://api.bgm.tv/calendar');
+    if (!response.ok) {
+      return [];
+    }
+    const data = await response.json();
+    // 确保返回的数据是数组格式
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    return [];
+  }
 }
