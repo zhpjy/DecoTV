@@ -126,24 +126,60 @@ export async function GET(req: NextRequest) {
     const cfg = await getConfig();
 
     const forceSpiderRefresh = searchParams.get('forceSpiderRefresh') === '1';
-    // 最终策略：优先使用远程公网 jar，失败时使用稳定的公网备用
+
+    // 高可用 JAR 策略：智能选择 + 多重备选 + 错误处理
     const jarInfo = await getSpiderJar(forceSpiderRefresh);
     let globalSpiderJar: string;
 
     if (jarInfo.success && jarInfo.source !== 'fallback') {
-      // 成功获取远程 jar，直接使用远程 URL（公网地址）
+      // 成功获取远程 JAR，使用完整的 URL;md5 格式
       globalSpiderJar = `${jarInfo.source};md5;${jarInfo.md5}`;
     } else {
-      // 远程失败，使用多个备选方案，提升成功率
-      const fallbackJars = [
-        'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar;md5;e53eb37c4dc3dce1c8ee0c996ca3a024',
-        'https://gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar;md5;e53eb37c4dc3dce1c8ee0c996ca3a024',
-        'https://cdn.jsdelivr.net/gh/hjdhnx/dr_py@main/js/drpy.jar;md5;' +
-          jarInfo.md5,
-      ];
-      // 随机选择一个备选jar，避免单点失败
-      globalSpiderJar =
-        fallbackJars[Math.floor(Math.random() * fallbackJars.length)];
+      // 所有远程源失败时的智能备选策略
+      // 根据请求来源和模式选择最优备选方案
+      const backupStrategies = {
+        // 国内用户优先策略
+        domestic: [
+          'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar;md5;e53eb37c4dc3dce1c8ee0c996ca3a024',
+          'https://gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar;md5;e53eb37c4dc3dce1c8ee0c996ca3a024',
+          'https://cdn.gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar;md5;e53eb37c4dc3dce1c8ee0c996ca3a024',
+        ],
+        // 国际用户优先策略
+        international: [
+          'https://cdn.jsdelivr.net/gh/hjdhnx/dr_py@main/js/drpy.jar;md5;' +
+            jarInfo.md5,
+          'https://fastly.jsdelivr.net/gh/hjdhnx/dr_py@main/js/drpy.jar;md5;' +
+            jarInfo.md5,
+          'https://cdn.jsdelivr.net/gh/FongMi/CatVodSpider@main/jar/spider.jar;md5;' +
+            jarInfo.md5,
+        ],
+        // 代理访问策略
+        proxy: [
+          'https://ghproxy.com/https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar;md5;' +
+            jarInfo.md5,
+          'https://github.moeyy.xyz/https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar;md5;' +
+            jarInfo.md5,
+        ],
+      };
+
+      // 智能选择备选策略（可以根据 User-Agent、地理位置等优化）
+      const userAgent = req.headers.get('user-agent') || '';
+      const acceptLanguage = req.headers.get('accept-language') || '';
+
+      let selectedStrategy: string[];
+      if (acceptLanguage.includes('zh-CN') || userAgent.includes('zh-CN')) {
+        selectedStrategy = backupStrategies.domestic;
+      } else {
+        selectedStrategy = backupStrategies.international;
+      }
+
+      // 添加代理备选（总是包含）
+      selectedStrategy = [...selectedStrategy, ...backupStrategies.proxy];
+
+      // 时间基础的轮询选择（避免总是使用同一个源）
+      const timeBasedIndex =
+        Math.floor(Date.now() / (30 * 60 * 1000)) % selectedStrategy.length;
+      globalSpiderJar = selectedStrategy[timeBasedIndex];
     }
 
     const sites = (cfg.SourceConfig || [])

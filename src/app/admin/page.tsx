@@ -5362,6 +5362,11 @@ function AdminPageClient() {
   const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
 
+  // JAR 状态监控相关状态
+  const [jarStatus, setJarStatus] = useState<any>(null);
+  const [isRefreshingJar, setIsRefreshingJar] = useState(false);
+  const [isCheckingJar, setIsCheckingJar] = useState(false);
+
   // 获取管理员配置
   // showLoading 用于控制是否在请求期间显示整体加载骨架。
   const fetchConfig = useCallback(async (showLoading = false) => {
@@ -5481,6 +5486,81 @@ function AdminPageClient() {
         `配置测试失败: ${err instanceof Error ? err.message : '网络错误'}`,
         showAlert
       );
+    }
+  };
+
+  // JAR 状态相关函数
+  const handleCheckJarStatus = async () => {
+    setIsCheckingJar(true);
+    try {
+      const response = await fetch('/api/tvbox/spider-status');
+      const result = await response.json();
+      setJarStatus(result);
+
+      if (result.success && result.fresh_status.success) {
+        showAlert({
+          type: 'success',
+          title: '🟢 JAR 状态正常',
+          message: `源: ${result.fresh_status.source
+            .split('/')
+            .pop()}, 大小: ${Math.round(result.fresh_status.size / 1024)}KB`,
+          timer: 3000,
+        });
+      } else {
+        showAlert({
+          type: 'warning',
+          title: '⚠️ JAR 状态异常',
+          message: result.fresh_status.is_fallback
+            ? '正在使用内置备用JAR'
+            : '远程JAR获取失败',
+        });
+      }
+    } catch (error) {
+      showAlert({
+        type: 'error',
+        title: 'JAR 状态检查失败',
+        message: error instanceof Error ? error.message : '网络错误',
+      });
+    } finally {
+      setIsCheckingJar(false);
+    }
+  };
+
+  const handleRefreshJar = async () => {
+    setIsRefreshingJar(true);
+    try {
+      const response = await fetch('/api/tvbox/spider-status', {
+        method: 'POST',
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        setJarStatus(result);
+        if (result.jar_status.success) {
+          showAlert({
+            type: 'success',
+            title: '🎉 JAR 刷新成功',
+            message: `已获取新的JAR文件，尝试了 ${result.jar_status.tried_sources} 个源`,
+            timer: 3000,
+          });
+        } else {
+          showAlert({
+            type: 'warning',
+            title: '⚠️ JAR 刷新完成',
+            message: '远程源暂时不可用，正在使用内置备用JAR',
+          });
+        }
+      } else {
+        throw new Error(result.error || 'JAR 刷新失败');
+      }
+    } catch (error) {
+      showAlert({
+        type: 'error',
+        title: 'JAR 刷新失败',
+        message: error instanceof Error ? error.message : '网络错误',
+      });
+    } finally {
+      setIsRefreshingJar(false);
     }
   };
 
@@ -5887,6 +5967,132 @@ function AdminPageClient() {
                     </div>
                   )}
                 </div>
+
+                {/* JAR 状态监控区域 */}
+                <div className='space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                      JAR 文件状态监控：
+                    </span>
+                    <div className='flex space-x-2'>
+                      <button
+                        onClick={handleCheckJarStatus}
+                        disabled={isCheckingJar}
+                        className={`px-3 py-2 rounded-md transition-colors text-sm font-medium flex items-center space-x-2 ${
+                          isCheckingJar
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
+                      >
+                        {isCheckingJar ? (
+                          <>
+                            <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                            <span>检查中...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>🔍</span>
+                            <span>检查状态</span>
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={handleRefreshJar}
+                        disabled={isRefreshingJar}
+                        className={`px-3 py-2 rounded-md transition-colors text-sm font-medium flex items-center space-x-2 ${
+                          isRefreshingJar
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : 'bg-orange-600 hover:bg-orange-700 text-white'
+                        }`}
+                      >
+                        {isRefreshingJar ? (
+                          <>
+                            <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                            <span>刷新中...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>🔄</span>
+                            <span>强制刷新</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* JAR 状态展示 */}
+                  {jarStatus && (
+                    <div
+                      className={`p-3 rounded-lg border-l-4 ${
+                        jarStatus.fresh_status?.success
+                          ? 'bg-green-50 dark:bg-green-900/20 border-green-500 text-green-800 dark:text-green-200'
+                          : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500 text-yellow-800 dark:text-yellow-200'
+                      }`}
+                    >
+                      <div className='flex items-center space-x-2 mb-2'>
+                        <span className='text-lg'>
+                          {jarStatus.fresh_status?.success ? '🟢' : '🟡'}
+                        </span>
+                        <span className='font-medium text-sm'>
+                          {jarStatus.fresh_status?.success
+                            ? 'JAR 状态正常'
+                            : 'JAR 使用备用方案'}
+                        </span>
+                      </div>
+                      <div className='text-xs space-y-1'>
+                        <div>
+                          源地址:{' '}
+                          {jarStatus.fresh_status?.source?.split('/').pop() ||
+                            'N/A'}
+                        </div>
+                        <div>
+                          文件大小:{' '}
+                          {jarStatus.fresh_status?.size
+                            ? Math.round(jarStatus.fresh_status.size / 1024) +
+                              'KB'
+                            : 'N/A'}
+                        </div>
+                        <div>
+                          MD5:{' '}
+                          {jarStatus.fresh_status?.md5?.substring(0, 8) ||
+                            'N/A'}
+                          ...
+                        </div>
+                        <div>
+                          尝试源数:{' '}
+                          {jarStatus.fresh_status?.tried_sources || 'N/A'}
+                        </div>
+                        {jarStatus.fresh_status?.is_fallback && (
+                          <div className='text-yellow-600 dark:text-yellow-400 font-medium'>
+                            ⚠️ 正在使用内置备用JAR文件
+                          </div>
+                        )}
+                        {jarStatus.recommendations &&
+                          jarStatus.recommendations.length > 0 && (
+                            <div>
+                              <div className='font-medium mt-2'>建议:</div>
+                              <ul className='ml-4 list-disc space-y-1'>
+                                {jarStatus.recommendations.map(
+                                  (rec: string, index: number) => (
+                                    <li key={index} className='text-xs'>
+                                      {rec}
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className='text-xs text-gray-500 dark:text-gray-400'>
+                    💡 如果遇到 "spider unreachable" 或 JAR
+                    加载错误，请尝试强制刷新 JAR
+                    文件。系统会自动选择最佳的远程源。
+                  </div>
+                </div>
+
                 <ul className='list-disc pl-6 text-sm text-gray-500 dark:text-gray-400 space-y-1'>
                   <li>常见入口：设置 → 订阅管理 → 添加订阅。</li>
                   <li>

@@ -6,28 +6,75 @@
  */
 import crypto from 'crypto';
 
-// Remote jar candidates (order by stability and SSL compatibility)
-// 优先使用支持 HTTPS 且稳定的源，减少 SSL handshake 错误
-const CANDIDATES: string[] = [
-  // 优先：国内云存储/CDN镜像（阿里云OSS、腾讯云COS、国内CDN）
+// 高可用 JAR 候选源配置 - 针对不同网络环境优化
+// 策略：多源并发检测 + 地区优化 + 实时健康检查
+const DOMESTIC_CANDIDATES: string[] = [
+  // 国内优先源（低延迟，适合国内用户）
+  'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar', // gitcode（国内服务器）
+  'https://gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar', // gitee（国内服务器）
+  'https://cdn.gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar', // gitcode CDN
+  'https://cdn.gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar', // gitee CDN
   'https://deco-spider.oss-cn-hangzhou.aliyuncs.com/XC.jar', // 阿里云 OSS
   'https://deco-spider-1250000000.cos.ap-shanghai.myqcloud.com/XC.jar', // 腾讯云 COS
-  'https://cdn.gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar', // gitcode CDN 镜像
-  'https://cdn.gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar', // gitee CDN 镜像
-  'https://gitcode.net/qq_26898231/TVBox/-/raw/main/JAR/XC.jar', // gitcode 原始
-  'https://gitee.com/q215613905/TVBoxOS/raw/main/JAR/XC.jar', // gitee 原始
-
-  // jsDelivr CDN（全球加速，SSL 稳定）
-  'https://cdn.jsdelivr.net/gh/hjdhnx/dr_py@main/js/drpy.jar',
-  'https://cdn.jsdelivr.net/gh/FongMi/CatVodSpider@main/jar/spider.jar',
-
-  // GitHub 原始链接（备用）
-  'https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
-  'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/spider.jar',
-
-  // 代理源（最后备用）
-  'https://ghproxy.com/https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
 ];
+
+const INTERNATIONAL_CANDIDATES: string[] = [
+  // 国际源（适合海外用户或国内访问受限时）
+  'https://cdn.jsdelivr.net/gh/hjdhnx/dr_py@main/js/drpy.jar', // jsDelivr 全球 CDN
+  'https://cdn.jsdelivr.net/gh/FongMi/CatVodSpider@main/jar/spider.jar', // jsDelivr 备用
+  'https://fastly.jsdelivr.net/gh/hjdhnx/dr_py@main/js/drpy.jar', // Fastly CDN
+  'https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar', // GitHub 原始
+  'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/spider.jar', // GitHub 备用
+];
+
+const PROXY_CANDIDATES: string[] = [
+  // 代理源（最后备选，解决网络封锁问题）
+  'https://ghproxy.com/https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
+  'https://github.moeyy.xyz/https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
+  'https://mirror.ghproxy.com/https://raw.githubusercontent.com/hjdhnx/dr_py/main/js/drpy.jar',
+];
+
+// 动态候选源选择 - 根据当前环境智能选择最优源
+function getCandidates(): string[] {
+  const isDomestic = isLikelyDomesticEnvironment();
+
+  if (isDomestic) {
+    // 国内环境：优先国内源，然后国际源，最后代理源
+    return [
+      ...DOMESTIC_CANDIDATES,
+      ...INTERNATIONAL_CANDIDATES,
+      ...PROXY_CANDIDATES,
+    ];
+  } else {
+    // 国际环境：优先国际源，然后代理源，最后国内源
+    return [
+      ...INTERNATIONAL_CANDIDATES,
+      ...PROXY_CANDIDATES,
+      ...DOMESTIC_CANDIDATES,
+    ];
+  }
+}
+
+// 检测是否为国内网络环境
+function isLikelyDomesticEnvironment(): boolean {
+  try {
+    // 检查时区（简单判断）
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz.includes('Asia/Shanghai') || tz.includes('Asia/Chongqing')) {
+      return true;
+    }
+
+    // 检查语言设置
+    const lang = typeof navigator !== 'undefined' ? navigator.language : 'en';
+    if (lang.startsWith('zh-CN')) {
+      return true;
+    }
+
+    return false;
+  } catch {
+    return false; // 默认国际环境
+  }
+}
 
 // 内置稳定 JAR 作为最终 fallback - 提取自实际工作的 spider.jar
 // 这是一个最小但功能完整的 spider jar，确保 TVBox 能正常加载
@@ -46,43 +93,93 @@ interface SpiderJarInfo {
 }
 
 let cache: SpiderJarInfo | null = null;
-const TTL = 6 * 60 * 60 * 1000; // 6h
+const failedSources: Set<string> = new Set(); // 记录失败的源
+let lastFailureReset = Date.now();
+
+// 动态TTL策略：成功获取时使用长缓存，失败时使用短缓存便于快速重试
+const SUCCESS_TTL = 4 * 60 * 60 * 1000; // 成功时缓存4小时
+const FAILURE_TTL = 10 * 60 * 1000; // 失败时缓存10分钟
+const FAILURE_RESET_INTERVAL = 2 * 60 * 60 * 1000; // 2小时重置失败记录
 
 async function fetchRemote(
   url: string,
-  timeoutMs = 15000
+  timeoutMs = 12000,
+  retryCount = 2
 ): Promise<Buffer | null> {
-  try {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeoutMs);
+  let _lastError: string | null = null;
 
-    // 优化的请求头，提升兼容性，减少 SSL 问题
-    const headers = {
-      'User-Agent':
-        'Mozilla/5.0 (Linux; Android 11; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36',
-      Accept: '*/*',
-      'Accept-Encoding': 'identity', // 避免压缩导致的问题
-      Connection: 'close', // 避免连接复用问题
-      'Cache-Control': 'no-cache',
-    };
+  for (let attempt = 0; attempt <= retryCount; attempt++) {
+    try {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort('timeout'), timeoutMs);
 
-    // 直接获取文件内容，跳过 HEAD 检查（减少请求次数）
-    const resp = await fetch(url, {
-      method: 'GET',
-      signal: controller.signal,
-      headers,
-    });
-    clearTimeout(id);
+      // 根据源类型优化请求头
+      const headers: Record<string, string> = {
+        Accept: '*/*',
+        'Accept-Encoding': 'identity',
+        'Cache-Control': 'no-cache',
+        Connection: 'close',
+      };
 
-    if (!resp.ok || resp.status >= 400) return null;
-    const ab = await resp.arrayBuffer();
-    if (ab.byteLength < 1000) return null; // jar 文件应该至少 1KB
+      // 针对不同源优化 User-Agent
+      if (url.includes('github') || url.includes('raw.githubusercontent')) {
+        headers['User-Agent'] = 'curl/7.68.0'; // GitHub 友好
+      } else if (url.includes('gitee') || url.includes('gitcode')) {
+        headers['User-Agent'] =
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'; // 国内源友好
+      } else if (url.includes('jsdelivr') || url.includes('fastly')) {
+        headers['User-Agent'] = 'DecoTV/1.0'; // CDN 源简洁标识
+      } else {
+        headers['User-Agent'] =
+          'Mozilla/5.0 (Linux; Android 11; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36';
+      }
 
-    return Buffer.from(ab);
-  } catch (error) {
-    // 记录但不抛出错误，让系统尝试下一个候选
-    return null;
+      const resp = await fetch(url, {
+        method: 'GET',
+        signal: controller.signal,
+        headers,
+        redirect: 'follow', // 允许重定向
+      });
+
+      clearTimeout(id);
+
+      if (!resp.ok) {
+        _lastError = `HTTP ${resp.status}: ${resp.statusText}`;
+        if (resp.status === 404 || resp.status === 403) {
+          break; // 这些错误不需要重试
+        }
+        continue; // 其他错误尝试重试
+      }
+
+      const ab = await resp.arrayBuffer();
+      if (ab.byteLength < 1000) {
+        _lastError = `File too small: ${ab.byteLength} bytes`;
+        continue;
+      }
+
+      // 验证文件是否为有效的 JAR（简单检查 ZIP 头）
+      const bytes = new Uint8Array(ab);
+      if (bytes[0] !== 0x50 || bytes[1] !== 0x4b) {
+        _lastError = 'Invalid JAR file format';
+        continue;
+      }
+
+      return Buffer.from(ab);
+    } catch (error: unknown) {
+      _lastError = error instanceof Error ? error.message : 'fetch error';
+
+      // 网络错误等待后重试
+      if (attempt < retryCount) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, 1000 * (attempt + 1))
+        );
+      }
+    }
   }
+
+  // 忽略最后的错误，返回 null 让上层处理
+
+  return null;
 }
 
 function md5(buf: Buffer): string {
@@ -93,16 +190,36 @@ export async function getSpiderJar(
   forceRefresh = false
 ): Promise<SpiderJarInfo> {
   const now = Date.now();
-  if (!forceRefresh && cache && now - cache.timestamp < TTL) {
-    return { ...cache, cached: true };
+
+  // 重置失败记录（定期清理）
+  if (now - lastFailureReset > FAILURE_RESET_INTERVAL) {
+    failedSources.clear();
+    lastFailureReset = now;
+  }
+
+  // 动态TTL检查
+  if (!forceRefresh && cache) {
+    const ttl = cache.success ? SUCCESS_TTL : FAILURE_TTL;
+    if (now - cache.timestamp < ttl) {
+      return { ...cache, cached: true };
+    }
   }
 
   let tried = 0;
+  const candidates = getCandidates();
 
-  for (const url of CANDIDATES) {
+  // 过滤掉近期失败的源（但允许一定时间后重试）
+  const activeCandidates = candidates.filter((url) => !failedSources.has(url));
+  const candidatesToTry =
+    activeCandidates.length > 0 ? activeCandidates : candidates;
+
+  for (const url of candidatesToTry) {
     tried += 1;
     const buf = await fetchRemote(url);
     if (buf) {
+      // 成功时从失败列表移除
+      failedSources.delete(url);
+
       const info: SpiderJarInfo = {
         buffer: buf,
         md5: md5(buf),
@@ -115,6 +232,9 @@ export async function getSpiderJar(
       };
       cache = info;
       return info;
+    } else {
+      // 失败时添加到失败列表
+      failedSources.add(url);
     }
   }
 

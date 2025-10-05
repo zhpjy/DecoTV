@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-
 'use client';
 
-import React, { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import React, { useEffect, useRef } from 'react';
 
 export default function ParticleBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -12,7 +11,9 @@ export default function ParticleBackground() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -25,7 +26,14 @@ export default function ParticleBackground() {
     };
     window.addEventListener('resize', onResize);
 
-    const particles: { x: number; y: number; vx: number; vy: number; r: number; hue: number }[] = [];
+    const particles: {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      r: number;
+      hue: number;
+    }[] = [];
     const P = Math.min(120, Math.floor((width * height) / 16000));
     for (let i = 0; i < P; i++) {
       particles.push({
@@ -40,16 +48,50 @@ export default function ParticleBackground() {
 
     // 根据路由切换主题色域
     const theme = (() => {
-      if (pathname.startsWith('/search')) return { a: 'rgba(99,102,241,0.09)', b: 'rgba(59,130,246,0.08)', beam: 'rgba(99,102,241,0.28)' };
+      if (pathname.startsWith('/search'))
+        return {
+          a: 'rgba(99,102,241,0.09)',
+          b: 'rgba(59,130,246,0.08)',
+          beam: 'rgba(99,102,241,0.28)',
+        };
       if (pathname.startsWith('/douban') && typeof window !== 'undefined') {
         const type = new URLSearchParams(window.location.search).get('type');
-        if (type === 'movie') return { a: 'rgba(244,114,182,0.10)', b: 'rgba(251,146,60,0.08)', beam: 'rgba(244,114,182,0.28)' };
-        if (type === 'tv') return { a: 'rgba(168,85,247,0.10)', b: 'rgba(59,130,246,0.08)', beam: 'rgba(168,85,247,0.28)' };
-        if (type === 'anime') return { a: 'rgba(20,184,166,0.10)', b: 'rgba(16,185,129,0.08)', beam: 'rgba(16,185,129,0.28)' };
-        if (type === 'show') return { a: 'rgba(250,204,21,0.10)', b: 'rgba(251,191,36,0.08)', beam: 'rgba(250,204,21,0.28)' };
+        if (type === 'movie')
+          return {
+            a: 'rgba(244,114,182,0.10)',
+            b: 'rgba(251,146,60,0.08)',
+            beam: 'rgba(244,114,182,0.28)',
+          };
+        if (type === 'tv')
+          return {
+            a: 'rgba(168,85,247,0.10)',
+            b: 'rgba(59,130,246,0.08)',
+            beam: 'rgba(168,85,247,0.28)',
+          };
+        if (type === 'anime')
+          return {
+            a: 'rgba(20,184,166,0.10)',
+            b: 'rgba(16,185,129,0.08)',
+            beam: 'rgba(16,185,129,0.28)',
+          };
+        if (type === 'show')
+          return {
+            a: 'rgba(250,204,21,0.10)',
+            b: 'rgba(251,191,36,0.08)',
+            beam: 'rgba(250,204,21,0.28)',
+          };
       }
-      if (pathname.startsWith('/live')) return { a: 'rgba(236,72,153,0.10)', b: 'rgba(244,63,94,0.08)', beam: 'rgba(236,72,153,0.28)' };
-      return { a: 'rgba(99,102,241,0.06)', b: 'rgba(16,185,129,0.06)', beam: 'rgba(236,72,153,0.22)' };
+      if (pathname.startsWith('/live'))
+        return {
+          a: 'rgba(236,72,153,0.10)',
+          b: 'rgba(244,63,94,0.08)',
+          beam: 'rgba(236,72,153,0.28)',
+        };
+      return {
+        a: 'rgba(99,102,241,0.06)',
+        b: 'rgba(16,185,129,0.06)',
+        beam: 'rgba(236,72,153,0.22)',
+      };
     })();
 
     const draw = () => {
@@ -121,4 +163,3 @@ export default function ParticleBackground() {
     />
   );
 }
-
