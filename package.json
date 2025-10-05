@@ -16,7 +16,10 @@
     "format:check": "prettier -c .",
     "gen:manifest": "node scripts/generate-manifest.js",
     "postbuild": "echo 'Build completed - sitemap generation disabled'",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "vercel-build": "pnpm gen:manifest && next build",
+    "docker:build": "docker build -t decotv .",
+    "docker:run": "docker run -p 3000:3000 decotv"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
