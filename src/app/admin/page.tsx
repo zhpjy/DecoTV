@@ -6061,6 +6061,15 @@ function AdminPageClient() {
                         <span>🔬</span>
                         <span>JAR源诊断工具</span>
                       </button>
+                      <button
+                        onClick={() =>
+                          window.open('/api/tvbox/jar-test', '_blank')
+                        }
+                        className='px-3 py-2 rounded-md bg-gradient-to-r from-green-600 via-emerald-500 to-teal-600 hover:from-green-700 hover:via-emerald-600 hover:to-teal-700 text-white transition-all text-sm font-medium flex items-center space-x-2 shadow-md hover:shadow-lg transform hover:scale-105'
+                      >
+                        <span>⚡</span>
+                        <span>JAR快速测试</span>
+                      </button>
                     </div>
                   </div>
 
