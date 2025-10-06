@@ -44,16 +44,23 @@ const JAR_SOURCES = {
     'https://agit.ai/Yoursmile7/TVBox/raw/branch/master/jar/custom_spider.jar',
     'https://ghproxy.net/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
     'https://mirror.ghproxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
+    'https://gh-proxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
+    'https://ghps.cc/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
+    'https://raw.gitmirror.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
+    'https://ghproxy.cc/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
+    'https://gh.api.99988866.xyz/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
   ],
   international: [
     'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
     'https://raw.gitmirror.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
     'https://ghproxy.cc/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
+    'https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
   ],
   proxy: [
     'https://gh-proxy.com/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
     'https://ghps.cc/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
     'https://gh.api.99988866.xyz/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
+    'https://ghproxy.net/https://raw.githubusercontent.com/FongMi/CatVodSpider/main/jar/custom_spider.jar',
   ],
 };
 
@@ -184,18 +191,44 @@ async function testJarSource(url: string): Promise<JarTestResult> {
 // 检测网络环境
 function detectEnvironment(request: NextRequest) {
   const userAgent = request.headers.get('user-agent') || '';
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const acceptLanguage = request.headers.get('accept-language') || '';
+  const cfIpCountry = request.headers.get('cf-ipcountry') || '';
+  const xForwardedFor = request.headers.get('x-forwarded-for') || '';
 
-  // 简单的国内环境检测
-  const isDomestic =
+  // 获取时区
+  let timezone = 'UTC';
+  try {
+    timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    // Fallback to UTC if timezone detection fails
+  }
+
+  // 多维度检测国内环境
+  const isChinaTimezone =
     timezone.includes('Asia/Shanghai') ||
     timezone.includes('Asia/Chongqing') ||
-    timezone.includes('Asia/Beijing');
+    timezone.includes('Asia/Beijing') ||
+    timezone.includes('Asia/Urumqi');
+
+  const isChinaLanguage =
+    acceptLanguage.includes('zh-CN') || acceptLanguage.includes('zh-Hans');
+
+  const isChinaIP = cfIpCountry === 'CN';
+
+  // 综合判断（满足任意两个条件即认为是国内）
+  const isDomestic =
+    [isChinaTimezone, isChinaLanguage, isChinaIP].filter(Boolean).length >= 2;
 
   return {
     userAgent,
     timezone,
     isDomestic,
+    detectionDetails: {
+      timezone: isChinaTimezone ? '中国时区' : '非中国时区',
+      language: isChinaLanguage ? '中文语言' : '其他语言',
+      ipCountry: cfIpCountry || '未知',
+      forwardedIp: xForwardedFor || '未知',
+    },
   };
 }
 
@@ -253,20 +286,42 @@ export async function GET(request: NextRequest) {
   const recommendations: string[] = [];
 
   if (successResults.length === 0) {
-    recommendations.push('❌ 所有 JAR 源均不可用，这可能是网络问题');
-    recommendations.push('🔧 建议检查：');
-    recommendations.push('  1. 网络连接是否正常');
-    recommendations.push('  2. 防火墙或代理设置');
-    recommendations.push('  3. DNS 解析是否正常');
-    recommendations.push('  4. 尝试切换网络环境（WiFi/移动数据）');
+    recommendations.push('❌ 所有 JAR 源均不可用，请检查网络环境');
+    recommendations.push('');
+    recommendations.push('🔧 诊断建议：');
+    recommendations.push('  1. 检查网络连接是否正常');
+    recommendations.push('  2. 检查防火墙或代理设置');
+    recommendations.push('  3. 尝试切换网络（WiFi/移动数据）');
+    recommendations.push('  4. 如在国内，建议使用代理或VPN');
+    recommendations.push(
+      '  5. DNS 解析可能存在问题，尝试更换DNS（如 8.8.8.8）'
+    );
+    recommendations.push('');
+    recommendations.push('💡 如果您在国内，GitHub 资源访问受限是正常现象');
   } else if (successResults.length < 3) {
-    recommendations.push('⚠️ 只有少数 JAR 源可用，网络环境可能受限');
-    recommendations.push(`✅ 推荐使用: ${summary.fastestSource}`);
-    recommendations.push('💡 建议使用 VPN 或代理改善网络环境');
+    recommendations.push('⚠️ 网络环境不佳，只有少数源可用');
+    recommendations.push('');
+    recommendations.push(`✅ 推荐使用最快源: ${summary.fastestSource}`);
+    recommendations.push(`   响应时间: ${successResults[0]?.responseTime}ms`);
+    recommendations.push('');
+    recommendations.push('💡 优化建议：');
+    if (env.isDomestic) {
+      recommendations.push('  • 检测到您在国内，建议优先使用镜像源');
+      recommendations.push('  • 可尝试使用 VPN 或代理改善访问速度');
+    } else {
+      recommendations.push('  • 检测到您在海外，建议优先使用国际源');
+    }
   } else {
     recommendations.push('✅ 网络环境良好，多个 JAR 源可用');
+    recommendations.push('');
     recommendations.push(`⚡ 最快源: ${summary.fastestSource}`);
+    recommendations.push(`   响应时间: ${successResults[0]?.responseTime}ms`);
+    recommendations.push('');
     recommendations.push(`🎯 推荐源: ${summary.recommendedSource}`);
+    if (env.isDomestic) {
+      recommendations.push('');
+      recommendations.push('💡 您在国内，已自动优先测试镜像源');
+    }
   }
 
   // 分析失败原因
@@ -278,16 +333,42 @@ export async function GET(request: NextRequest) {
     (r) => r.status === 'invalid'
   ).length;
 
+  if (timeouts > 0 || httpErrors > 0 || invalidJars > 0) {
+    recommendations.push('');
+    recommendations.push('📊 问题分析：');
+  }
+
   if (timeouts > 0) {
-    recommendations.push(`⏱️ 检测到 ${timeouts} 个超时，网络延迟较高`);
+    recommendations.push(`  • ${timeouts} 个源超时 - 网络延迟较高或源不可达`);
   }
   if (httpErrors > 0) {
     recommendations.push(
-      `🚫 检测到 ${httpErrors} 个 HTTP 错误（403/404），源文件可能已失效`
+      `  • ${httpErrors} 个源返回 HTTP 错误（403/404） - 源文件可能已失效或被限制访问`
     );
+    recommendations.push('    建议：这些源可能需要代理或已下线，请避免使用');
   }
   if (invalidJars > 0) {
-    recommendations.push(`⚠️ 检测到 ${invalidJars} 个无效 JAR 文件`);
+    recommendations.push(
+      `  • ${invalidJars} 个源返回无效 JAR 文件 - 文件格式错误或已损坏`
+    );
+  }
+
+  // 网络环境提示
+  recommendations.push('');
+  recommendations.push('🌐 网络环境检测：');
+  recommendations.push(`  • 时区: ${env.timezone}`);
+  recommendations.push(
+    `  • 判定环境: ${env.isDomestic ? '🇨🇳 国内' : '🌍 海外'}`
+  );
+  if (env.detectionDetails) {
+    recommendations.push(`  • 时区判定: ${env.detectionDetails.timezone}`);
+    recommendations.push(`  • 语言判定: ${env.detectionDetails.language}`);
+    if (
+      env.detectionDetails.ipCountry &&
+      env.detectionDetails.ipCountry !== '未知'
+    ) {
+      recommendations.push(`  • IP 国家: ${env.detectionDetails.ipCountry}`);
+    }
   }
 
   const report: DiagnosticReport = {
