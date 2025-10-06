@@ -119,7 +119,7 @@ export async function getCurrentVersionInfo(): Promise<VersionInfo> {
     };
   } catch (error) {
     // 降级处理：使用 VERSION.txt 的默认值
-    const timestamp = '20251005140531';
+    const timestamp = '20251006163200';
     return {
       version: CURRENT_VERSION,
       timestamp,
