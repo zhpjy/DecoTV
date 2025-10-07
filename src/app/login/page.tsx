@@ -82,7 +82,7 @@ function LoginPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState('60216023');
-  const [username, setUsername] = useState('admin');
+  const [username, setUsername] = useState('public');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [shouldAskUsername, setShouldAskUsername] = useState(false);
